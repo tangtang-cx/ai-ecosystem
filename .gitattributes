@@ -1,6 +1,0 @@
-* text=auto eol=lf
-*.onnx binary
-*.wasm binary
-*.png binary
-*.jpg binary
-*.ico binary
