@@ -40,12 +40,7 @@ export class Embedder {
   ): Promise<void> {
     if (this.pipe) return;
     const started = performance.now();
-    env.allowRemoteModels = false;
-    env.allowLocalModels = true;
-    env.localModelPath = `${import.meta.env.BASE_URL}models/`;
-    env.useBrowserCache = true;
-    env.backends.onnx.wasm.wasmPaths = `${import.meta.env.BASE_URL}ort/`;
-    env.backends.onnx.wasm.numThreads = 1;
+    configureEnvironment();
     onProgress({ phase: "download", message: `加载 ${precision.toUpperCase()} 基线模型…` });
     this.pipe = await this.load(precision, backend, onProgress);
     this.backend = backend;
@@ -56,12 +51,7 @@ export class Embedder {
 
   private async _init(onProgress: (progress: LoadProgress) => void): Promise<void> {
     const started = performance.now();
-    env.allowRemoteModels = false;
-    env.allowLocalModels = true;
-    env.localModelPath = `${import.meta.env.BASE_URL}models/`;
-    env.useBrowserCache = true;
-    env.backends.onnx.wasm.wasmPaths = `${import.meta.env.BASE_URL}ort/`;
-    env.backends.onnx.wasm.numThreads = 1;
+    configureEnvironment();
 
     onProgress({ phase: "detect", message: "检测浏览器推理后端…" });
     const gpuAvailable = await this.hasWebGpu();
@@ -159,4 +149,17 @@ export class Embedder {
 function shortError(error: unknown): string {
   if (error instanceof Error) return error.message.slice(0, 120);
   return String(error).slice(0, 120);
+}
+
+function configureEnvironment(): void {
+  env.allowRemoteModels = true;
+  env.allowLocalModels = true;
+  env.localModelPath = `${import.meta.env.BASE_URL}models/`;
+  env.remoteHost = "https://hf-mirror.com";
+  env.useBrowserCache = true;
+  const wasm = env.backends.onnx?.wasm;
+  if (wasm) {
+    wasm.wasmPaths = `${import.meta.env.BASE_URL}ort/`;
+    wasm.numThreads = 1;
+  }
 }

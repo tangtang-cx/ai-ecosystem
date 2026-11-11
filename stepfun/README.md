@@ -19,6 +19,9 @@ npm run serve               # 构建前端并启动本地服务
 # 打开 http://127.0.0.1:8787
 ```
 
+模型权重不提交到仓库。若跳过 `model:fetch`，浏览器会从 `hf-mirror.com` 下载
+模型文件（仅下载权重，推理仍在本地执行）；离线环境请先执行 `model:fetch`。
+
 默认使用 **seekdb 嵌入式模式**，数据库目录为 `stepfun/.data/seekdb`。
 
 ### Windows 说明
