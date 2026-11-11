@@ -1,0 +1,18 @@
+services:
+  seekdb:
+    image: oceanbase/seekdb:latest
+    container_name: stepfun-seekdb
+    ports:
+      - "2881:2881"
+    environment:
+      ROOT_PASSWORD: ""
+      CPU_COUNT: "4"
+      MEMORY_LIMIT: "4G"
+    volumes:
+      - ./.data/seekdb:/var/lib/oceanbase
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/2881' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s

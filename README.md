@@ -1,0 +1,41 @@
+# AI 生态创新赛题作品
+
+本仓库用于 2026 第六届 OceanBase 数据库大赛 **AI 生态创新**方向的三道合作方赛题：
+
+| 目录 | 赛题 | 提交物 | 状态 |
+| --- | --- | --- | --- |
+| `gaode/` | 周边去哪儿：基于高德的地点推荐助手 | `gaode/SKILL.md` | 已完成 |
+| `stepfun/` | 端侧 AI 推理性能优化与 seekdb 混合检索 | Web 应用、源码、技术说明 | 已完成（本机未复跑完整近似检索，见下） |
+| `amd/` | seekdb × AMD hipVS：加速 HNSW 索引构建 | 源码、复现测试、CPU/GPU 对比报告 | 未开始：缺 ROCm/GPU |
+
+## 重要说明
+
+- 高德题**不需要**提交后端代码或 API Key。评测平台统一提供 Agent、模型与高德 MCP 工具，只加载 `gaode/SKILL.md`。
+- StepFun 题**禁止调用云端推理 API**。文档向量化与查询向量化必须在浏览器本地完成，存储和混合检索必须由 seekdb 完成。
+- AMD 题以 **GPU CAGRA 路径**为硬门槛，CPU 平替不能作为有效提交，必须有 AMD Radeon / ROCm 环境。
+
+> StepFun 的本机验证范围：浏览器端 INT8/FP16 加载、向量化、量化质量对比已实测；
+> seekdb 建表与混合检索 SQL 契约已在真实 seekdb 内核验证。但本机 Windows 的
+> seekdb-js 嵌入式绑定在 `open()` 阻塞、HNSW 刷新超时，完整近似检索需在
+> Linux/macOS 或 `SEEKDB_MODE=server` + Docker 下复跑。
+
+## 分支与提交
+
+三个赛题均基于官方 `2026-competition-ecosystem` 分支的目录约定：
+
+```text
+gaode/    -> 高德 Skill
+stepfun/  -> 阶跃星辰 Web 应用
+amd/      -> AMD 赛题源码（如有 GPU 环境）
+```
+
+提交到提测平台时填写本仓库地址、`2026-competition-ecosystem` 分支和完整 40 位 commit SHA。
+
+## 本地校验
+
+```powershell
+# 校验高德 Skill 的 YAML frontmatter 与必填段落
+python tools/check_skill.py gaode/SKILL.md
+```
+
+StepFun 与 AMD 的启动方式分别见对应目录的 `README.md`。

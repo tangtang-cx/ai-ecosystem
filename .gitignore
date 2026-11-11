@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.npm-cache/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+artifacts/
+.tmp/
+
+# Local databases and model caches
+.data/
+.cache/
+*.db
+*.db-*
+
+# Generated ONNX Runtime Web assets (recreated by scripts/copy-ort.mjs)
+public/ort/
+stepfun/public/ort/
+# Model weights are fetched locally with `npm run model:fetch` (too large for git)
+public/models/**/onnx/*.onnx
+stepfun/public/models/**/onnx/*.onnx
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
