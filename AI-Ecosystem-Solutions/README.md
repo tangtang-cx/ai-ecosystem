@@ -16,6 +16,24 @@
 
 ---
 
+## 提测信息（仓库 / 分支 / Commit SHA）
+
+仓库：`https://github.com/tangtang-cx/ai-ecosystem`（私有库）
+
+| 赛题 | 分支 | Commit SHA（40 位） | 分支内容 |
+| --- | --- | --- | --- |
+| Dify | `Dify` | `50437db84813970208381f931147eb57deca8c6b` | `Dify/`（DSL + 知识库 + 脚本） |
+| Qoder | `qoder` | `a97d78f4bf837fa6bc04a8ef02253a03c4f0aee6` | `Qoder/`（应用 + 规则 + 测试） |
+| 魔搭社区 | `modelscope` | `c5bfe6e237d77941fb77eb7a5b098d29db8acd94` | `魔搭/`（代码 + 录屏 + 测试） |
+| 高德 | `gaode` | `55c0faebea36a0900d7c54ee647a9c453e099fa7` | `gaode/SKILL.md` |
+| StepFun | `stepfun` | `ec22a31e539d4ece0657b68ebdbc35f02c9bff92` | `stepfun/` |
+| AMD | `amd-cagra-solution` | `fced626b49611b8e37be0dd1bac8559220cfabe6` | `amd/`（需 apply 到 seekdb fork） |
+| 生态赛题合并版 | `2026-competition-ecosystem` | 见仓库该分支最新提交 | 三个生态赛题 + 高德 + StepFun |
+
+> 每个分支都含官方基线提交 `39e069f4`；每个分支根目录的 `README.md` 都写了该题的评测跑法。
+
+---
+
 ## 1. AMD · seekdb × AMD hipVS：加速 HNSW 索引构建
 
 **目录**：`amd-cagra-solution` 分支 · `amd/`（本仓库不是官方答题仓库，官方要求改到 seekdb fork 上）
