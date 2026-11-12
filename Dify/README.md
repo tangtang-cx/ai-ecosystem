@@ -1,5 +1,10 @@
 # Dify 赛题交付物：SQL 老中医 · 数据库问诊室
 
+> ★ **作品链接该给哪一条** → 见 [`LINK_GUIDE.md`](LINK_GUIDE.md)。
+> 结论：交 **cloud.dify.ai 上导入 `app.yml` 后发布的分享链接**；
+> 之前那条 `cloud.fastgpt.cn/...` 是另一个应用（通用问答助手），评委按验证样例跑它
+> 跑不出我们声明的六段式开方，因此被判「主要功能运行失败」。
+
 > 题目：**Just for Fun，用 Dify 做一个好玩的智能应用**，并**实际使用 seekdb 或 PowerContext**。
 > 交付：Dify DSL（可导入）+ 运行说明 + 验证样例 + 真·seekdb 配套后端（真实读写记录）。
 
