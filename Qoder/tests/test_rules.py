@@ -51,6 +51,14 @@ class RuleTriggerTests(unittest.TestCase):
     def test_function_on_column(self) -> None:
         self.assertIn("OB-006", rule_ids("SELECT id FROM t WHERE YEAR(created_at) = 2026;"))
 
+    def test_date_function_on_column(self) -> None:
+        # DATE(col) is the most common form; it used to slip through the rule
+        self.assertIn("OB-006", rule_ids("SELECT id FROM t WHERE DATE(created_at) = '2026-01-01';"))
+        self.assertIn(
+            "OB-006",
+            rule_ids("SELECT * FROM t WHERE DATE(c)='2026-01-01' LIMIT 20, 200000;"),
+        )
+
     def test_deep_pagination(self) -> None:
         self.assertIn("OB-007", rule_ids("SELECT id FROM t LIMIT 20, 200000;"))
 

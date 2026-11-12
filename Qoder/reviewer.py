@@ -119,7 +119,7 @@ RULES: list[Rule] = [
         id="OB-006",
         level="warn",
         title="索引列被函数包裹",
-        pattern=r"\b(where|and|or)\b[^;\n]{0,400}?\b(year|month|day|date_format|substring|left|right|lower|upper|concat)\s*\(\s*[a-z_][a-z0-9_]*\s*\)",
+        pattern=r"\b(where|and|or)\b[^;\n]{0,400}?\b(year|month|day|date|date_format|substring|left|right|lower|upper|concat)\s*\(\s*[a-z_][a-z0-9_]*\s*\)",
         message="在 WHERE 里对列使用函数会让普通索引失效。",
         suggestion="改成范围条件（>= / <），或建函数索引 / 生成列索引。",
     ),

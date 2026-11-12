@@ -38,7 +38,7 @@ RULES = [
      "a leading wildcard cannot use an index",
      "use a prefix match (LIKE 'x%') or a fulltext index"),
     ("OB-006", "warn", "indexed column wrapped in a function",
-     r"\b(where|and|or)\b[^;\n]{0,400}?\b(year|month|day|date_format|substring|left|right|lower|upper|concat)\s*\(\s*[a-z_][a-z0-9_]*\s*\)",
+     r"\b(where|and|or)\b[^;\n]{0,400}?\b(year|month|day|date|date_format|substring|left|right|lower|upper|concat)\s*\(\s*[a-z_][a-z0-9_]*\s*\)",
      "a function on the column makes the index unusable",
      "rewrite as a range predicate or add a functional/generated column index"),
     ("OB-007", "warn", "deep pagination OFFSET",
