@@ -22,6 +22,9 @@ from pathlib import Path
 
 SERVICE_DIR = Path(__file__).resolve().parent
 
+# last startup error of the in-process service thread (surfaced to the UI)
+STATE: dict[str, object] = {"error": None}
+
 
 def _split_base(base_url: str) -> tuple[str, int]:
     trimmed = base_url.rstrip("/")
@@ -56,20 +59,23 @@ def ensure_service(base_url: str = "http://127.0.0.1:8848", *, wait: float = 90.
         return {"ok": False, "error": f"cannot import the seekdb service: {error}"}
 
     def _run() -> None:
-        store = SeekdbStore()
-        store.open()
-        embedder = Embedder.get()
         try:
-            count = store.count()
-        except Exception:
-            count = 0
-        if count == 0:
+            store = SeekdbStore()
+            store.open()
+            embedder = Embedder.get()
             try:
-                ingest(store, embedder, load_kb_documents())
+                count = store.count()
             except Exception:
-                pass
-        server = ThreadingHTTPServer((host, port), Handler)
-        server.serve_forever()
+                count = 0
+            if count == 0:
+                try:
+                    ingest(store, embedder, load_kb_documents())
+                except Exception:
+                    pass
+            server = ThreadingHTTPServer((host, port), Handler)
+            server.serve_forever()
+        except BaseException as error:  # noqa: BLE001 - surface the reason to the UI
+            STATE["error"] = f"{type(error).__name__}: {error}"
 
     thread = threading.Thread(target=_run, daemon=True, name="seekdb-service")
     thread.start()
@@ -79,6 +85,8 @@ def ensure_service(base_url: str = "http://127.0.0.1:8848", *, wait: float = 90.
         if _reachable(base_url, timeout=1.0):
             with urllib.request.urlopen(f"{base_url.rstrip('/')}/health", timeout=10) as response:
                 return json.loads(response.read().decode("utf-8"))
+        if STATE.get("error"):
+            return {"ok": False, "error": f"seekdb service failed to start: {STATE['error']}"}
         time.sleep(1.0)
     return {"ok": False, "error": "the seekdb service did not become ready in time"}
 

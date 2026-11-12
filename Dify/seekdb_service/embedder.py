@@ -11,13 +11,21 @@ so that the Dify demo does not depend on any cloud inference API.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import threading
 from pathlib import Path
 
-import numpy as np
-import onnxruntime as ort
+try:  # optional: only needed for the real bge model
+    import numpy as np
+except Exception:  # pragma: no cover - numpy is optional
+    np = None
+
+try:  # optional: only needed for the real bge model
+    import onnxruntime as ort
+except Exception:  # pragma: no cover - onnxruntime is optional
+    ort = None
 
 DEFAULT_MODEL_DIR = Path(
     os.environ.get(
@@ -30,9 +38,15 @@ EMBEDDING_DIM = 512
 
 
 class Embedder:
-    """Lazy, thread-safe singleton around the ONNX model."""
+    """Lazy, thread-safe singleton around the ONNX model.
 
-    _instance: "Embedder | None" = None
+    When the ONNX weights are not present (they are not committed to git), the
+    factory falls back to :class:`HashingEmbedder` so that the whole pipeline
+    (seekdb storage + vector retrieval + RRF fusion) keeps working instead of
+    the service refusing to start.
+    """
+
+    _instance: "Embedder | HashingEmbedder | None" = None
     _lock = threading.Lock()
 
     def __init__(self, model_dir: Path | None = None) -> None:
@@ -43,7 +57,7 @@ class Embedder:
             raise FileNotFoundError(
                 f"model files missing under {self.model_dir} "
                 "(expected onnx/model_int8.onnx and tokenizer.json); "
-                "run `npm run model:fetch` inside stepfun/ first"
+                "run `python dify/seekdb_service/fetch_model.py` to fetch them"
             )
 
         from tokenizers import Tokenizer
@@ -51,13 +65,19 @@ class Embedder:
         self.tokenizer = Tokenizer.from_file(str(tokenizer_path))
         self.session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
         self.max_length = 512
+        self.is_fallback = False
         self._lock = threading.Lock()
 
     @classmethod
-    def get(cls, model_dir: Path | None = None) -> "Embedder":
+    def get(cls, model_dir: Path | None = None) -> "Embedder | HashingEmbedder":
         with cls._lock:
             if cls._instance is None:
-                cls._instance = cls(model_dir)
+                try:
+                    cls._instance = cls(model_dir)
+                except Exception as error:  # missing weights / missing onnxruntime
+                    fallback = HashingEmbedder()
+                    fallback.reason = str(error)
+                    cls._instance = fallback
             return cls._instance
 
     def embed(self, texts: list[str]) -> list[list[float]]:
@@ -103,6 +123,43 @@ class Embedder:
 
     def embed_one(self, text: str) -> list[float]:
         return self.embed([text])[0]
+
+
+class HashingEmbedder:
+    """Deterministic fallback embedder (character n-gram hashing).
+
+    It is *not* a neural model, but it produces stable, L2-normalised 512-dim
+    vectors, so seekdb still stores real vectors, still builds the HNSW index
+    and still fuses the vector and fulltext branches with RRF. The app shows a
+    banner saying which mode is active.
+    """
+
+    is_fallback = True
+    reason = "onnx weights not available"
+
+    def __init__(self, dim: int = 512) -> None:
+        self.dim = dim
+        self.model_dir = DEFAULT_MODEL_DIR
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        """Embed a batch of texts into L2-normalised 512-dim vectors (pure Python)."""
+        vectors = []
+        for text in texts:
+            vec = [0.0] * self.dim
+            grams = list(text) + [text[i : i + 2] for i in range(len(text) - 1)]
+            for gram in grams:
+                digest = hashlib.sha256(gram.encode("utf-8")).digest()
+                index = int.from_bytes(digest[:4], "big") % self.dim
+                vec[index] += 1.0 if digest[4] % 2 == 0 else -1.0
+            norm = sum(value * value for value in vec) ** 0.5
+            if norm > 0:
+                vec = [value / norm for value in vec]
+            vectors.append(vec)
+        return vectors
+
+    def embed_one(self, text: str) -> list[float]:
+        return self.embed([text])[0]
+
 
 
 def cosine(a: list[float], b: list[float]) -> float:

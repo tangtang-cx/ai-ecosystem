@@ -3,6 +3,7 @@ name: oceanbase-sql-reviewer
 description: 审查 OceanBase / seekdb / MySQL 的 SQL 与 DDL，输出「病灶诊断 / 药方 / 忌口 / 养生建议」四段式报告；可直接调用本地 bge-small-zh 向量模型 + seekdb 混合检索（向量 + 全文 + RRF）取回官方文档依据，检索不到时明确说明而不是编造 API。当用户贴出 SQL、报错码或描述慢查询、深分页、索引失效、全表扫、锁等待等数据库问题时使用。
 license: Apache-2.0
 ---
+<!-- OB-S:RmvSuPnRvTjZd4kLBSIaTg -->
 
 # OceanBase SQL 审查（老中医版）
 

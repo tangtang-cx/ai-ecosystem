@@ -14,8 +14,32 @@ https://modelscope.cn/skills/wzhaihqy/oceanbase-sql-reviewer
 - 已实测：未登录直接访问返回 **HTTP 200**，页面标题含 `oceanbase-sql-reviewer`（可见范围=公开生效）。
 - 提测平台「魔搭社区」入口 → 粘贴上面这条网址 → 提交。
 
-> 同一份 Skill 的源码也在本仓库 `modelscope/`（`SKILL.md` + `scripts/review_rules.py` + `references/rules.md`），
-> 打包文件 `modelscope/oceanbase-sql-reviewer-skill.zip`。
+---
+
+## 0.1 ⚠️ 验证行（第二轮判题要求，必须补）
+
+第一轮判语：**「未找到提交时的验证行」** —— 平台签发了一行防伪标记，判题时要在**已发布的
+SKILL.md** 里找到它。我们已把它插进 `SKILL.md` 的 frontmatter 之后（文件头部，任何头部校验都能命中）：
+
+```markdown
+<!-- OB-S:RmvSuPnRvTjZd4kLBSIaTg -->
+```
+
+**你还需要做的两步**（我无法代做，要用你的魔搭账号）：
+
+1. 打开 Skill 页面 → 文件 → `SKILL.md` → 用新版内容覆盖上传（新版文件在本目录，
+   也打包在 `oceanbase-sql-reviewer-skill.zip`），或者直接把上面那行加到旧文件末尾再保存；
+2. 点「发布」让线上版本更新（**发布后修改需要再点一次发布才会更新线上**）；
+3. 回提测平台，**重新提测**（网址不变，仍是 `https://modelscope.cn/skills/wzhaihqy/oceanbase-sql-reviewer`）。
+
+> 平台提示「无需主动重新生成验证行」——这行是平台签发的，照抄即可，不要自己编。
+
+验证是否生效（发布后随时可查）：
+
+```bash
+curl -s https://modelscope.cn/skills/wzhaihqy/oceanbase-sql-reviewer/resolve/master/SKILL.md | grep -n 'OB-S:'
+# 期望输出：6:<!-- OB-S:RmvSuPnRvTjZd4kLBSIaTg -->
+```
 
 ---
 
