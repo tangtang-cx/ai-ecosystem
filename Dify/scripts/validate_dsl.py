@@ -257,6 +257,7 @@ def validate(path: Path) -> Report:
                     report.error(f"回复节点 `{node_id}` 引用了不存在的节点：{ref}")
 
     # ---- edges ----------------------------------------------------------
+    node_type_by_id = {node_id: kind for node_id, kind in node_types.items()}
     for edge in edges:
         if not isinstance(edge, dict):
             report.error("edge 必须是 mapping")
@@ -272,6 +273,33 @@ def validate(path: Path) -> Report:
             report.error(f"edge `{edge.get('id')}` 的 target 不存在：{target}")
         if edge.get("sourceHandle") != "source":
             report.warn(f"edge `{edge.get('id')}` 的 `sourceHandle` 应为 `source`")
+        # Dify only imports edges that carry `type: custom` and data.sourceType/targetType.
+        # Without them the nodes run unconnected and the answer node resolves to an
+        # empty string (observed on the published app: predecessor_node_id = null).
+        if edge.get("type") != "custom":
+            report.error(
+                f"edge `{edge.get('id')}` 缺少 `type: custom` —— "
+                "Dify 导入时会丢弃这条边，节点之间不连通，回答节点会输出空字符串"
+            )
+        data = edge.get("data")
+        if not isinstance(data, dict):
+            report.error(
+                f"edge `{edge.get('id')}` 缺少 `data.sourceType/targetType` —— "
+                "同样会导致边被丢弃、主流程断开"
+            )
+        else:
+            expected_source = node_type_by_id.get(source)
+            expected_target = node_type_by_id.get(target)
+            if data.get("sourceType") != expected_source:
+                report.error(
+                    f"edge `{edge.get('id')}` 的 sourceType 应为 {expected_source!r}，"
+                    f"当前 {data.get('sourceType')!r}"
+                )
+            if data.get("targetType") != expected_target:
+                report.error(
+                    f"edge `{edge.get('id')}` 的 targetType 应为 {expected_target!r}，"
+                    f"当前 {data.get('targetType')!r}"
+                )
 
     # ---- connectivity ---------------------------------------------------
     starts = [node_id for node_id, kind in node_types.items() if kind == "start"]

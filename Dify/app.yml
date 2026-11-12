@@ -73,16 +73,24 @@ workflow:
       voice: ''
   graph:
     edges:
-      - id: start-llm
+      - data:
+          sourceType: start
+          targetType: llm
+        id: start-llm
         source: start
         sourceHandle: source
         target: llm
         targetHandle: target
-      - id: llm-answer
+        type: custom
+      - data:
+          sourceType: llm
+          targetType: answer
+        id: llm-answer
         source: llm
         sourceHandle: source
         target: answer
         targetHandle: target
+        type: custom
     nodes:
       - id: start
         type: custom

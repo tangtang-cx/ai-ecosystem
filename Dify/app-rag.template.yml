@@ -64,21 +64,33 @@ workflow:
       voice: ''
   graph:
     edges:
-      - id: start-kb
+      - data:
+          sourceType: start
+          targetType: knowledge-retrieval
+        id: start-kb
         source: start
         sourceHandle: source
         target: kb
         targetHandle: target
-      - id: kb-llm
+        type: custom
+      - data:
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: kb-llm
         source: kb
         sourceHandle: source
         target: llm
         targetHandle: target
-      - id: llm-answer
+        type: custom
+      - data:
+          sourceType: llm
+          targetType: answer
+        id: llm-answer
         source: llm
         sourceHandle: source
         target: answer
         targetHandle: target
+        type: custom
     nodes:
       - id: start
         type: custom

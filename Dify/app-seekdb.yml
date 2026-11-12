@@ -79,21 +79,33 @@ workflow:
       voice: ''
   graph:
     edges:
-      - id: start-seekdb
+      - data:
+          sourceType: start
+          targetType: http-request
+        id: start-seekdb
         source: start
         sourceHandle: source
         target: seekdb
         targetHandle: target
-      - id: seekdb-llm
+        type: custom
+      - data:
+          sourceType: http-request
+          targetType: llm
+        id: seekdb-llm
         source: seekdb
         sourceHandle: source
         target: llm
         targetHandle: target
-      - id: llm-answer
+        type: custom
+      - data:
+          sourceType: llm
+          targetType: answer
+        id: llm-answer
         source: llm
         sourceHandle: source
         target: answer
         targetHandle: target
+        type: custom
     nodes:
       - id: start
         type: custom
