@@ -153,24 +153,31 @@ async function main() {
 
   let uploaded = 0;
   for (const localPath of args.paths) {
-    const absolute = join(ROOT, localPath);
+    // "src::dest" pushes src to a different repository path (e.g. a branch README).
+    const [sourcePath, destPath] = localPath.includes("::")
+      ? localPath.split("::")
+      : [localPath, localPath];
+    const absolute = join(ROOT, sourcePath);
     const info = await stat(absolute).catch(() => null);
     if (!info) {
-      console.log(`skip (missing): ${localPath}`);
+      console.log(`skip (missing): ${sourcePath}`);
       continue;
     }
     const files = info.isDirectory() ? await walk(absolute) : [absolute];
     for (const file of files) {
       const relativePath = relative(ROOT, file).split(sep).join("/");
       if (isIgnored(relativePath)) continue;
+      const targetPath = info.isDirectory()
+        ? `${destPath.replace(/\/$/, "")}/${relativePath.slice(sourcePath.replace(/\/$/, "").length + 1)}`
+        : destPath;
       const content = await readFile(file);
       const blob = await api(`/repos/${REPO}/git/blobs`, {
         method: "POST",
         body: JSON.stringify({ content: content.toString("base64"), encoding: "base64" }),
       });
-      entries.set(relativePath, { mode: "100644", sha: blob.sha });
+      entries.set(targetPath, { mode: "100644", sha: blob.sha });
       uploaded += 1;
-      console.log(`blob ${relativePath} (${content.length} bytes) ${blob.sha.slice(0, 8)}`);
+      console.log(`blob ${targetPath} (${content.length} bytes) ${blob.sha.slice(0, 8)}`);
     }
   }
 

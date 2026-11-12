@@ -19,6 +19,22 @@
 > 全部赛题的**统一索引**（7 节：AMD / MiniMax / Qoder / StepFun / Dify / 高德 / 魔搭，
 > 每节含实现思路、截图链接、核心代码）见 [`AI-Ecosystem-Solutions/README.md`](AI-Ecosystem-Solutions/README.md)。
 
+## 提测信息（仓库 / 分支 / Commit SHA）
+
+仓库地址统一为 `https://github.com/tangtang-cx/ai-ecosystem`（私有库，评测方需有访问权限）。
+
+| 赛题 | 分支 | Commit SHA（40 位） |
+| --- | --- | --- |
+| 高德 | `gaode` | `55c0faebea36a0900d7c54ee647a9c453e099fa7` |
+| StepFun | `stepfun` | `ec22a31e539d4ece0657b68ebdbc35f02c9bff92` |
+| AMD | `amd-cagra-solution` | `fced626b49611b8e37be0dd1bac8559220cfabe6` |
+| Dify | `Dify` | `50437db84813970208381f931147eb57deca8c6b` |
+| Qoder | `qoder` | `a97d78f4bf837fa6bc04a8ef02253a03c4f0aee6` |
+| 魔搭社区 | `modelscope` | `c5bfe6e237d77941fb77eb7a5b098d29db8acd94` |
+| 全部生态赛题合并版 | `2026-competition-ecosystem` | 见 [`AI-Ecosystem-Solutions/README.md`](AI-Ecosystem-Solutions/README.md) |
+
+> 所有分支都包含官方基线提交 `39e069f4`，可直接用于提测平台的「仓库 + 分支 + 40 位 SHA」校验。
+
 ## 重要说明
 
 - 高德题**不需要**提交后端代码或 API Key。评测平台统一提供 Agent、模型与高德 MCP 工具，只加载 `gaode/SKILL.md`。
