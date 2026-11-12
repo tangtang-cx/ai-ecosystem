@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Sync local files onto a GitHub branch through the REST API.
  *
  * git's smart-HTTP endpoint is blocked in this environment, but api.github.com
@@ -10,10 +10,11 @@
  * Usage:
  *   GITHUB_TOKEN=... node tools/sync_branches.mjs \
  *     --branch main --base main \
- *     --paths Dify Qoder 魔搭 AI-Ecosystem-Solutions README.md \
+ *     --paths Dify Qoder 榄旀惌 AI-Ecosystem-Solutions README.md \
  *     --message "feat: add dify, qoder and modelscope deliverables"
  */
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readFileSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join, relative, sep } from "node:path";
 
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -104,6 +105,8 @@ async function api(path, init = {}) {
 }
 
 async function refSha(branch) {
+  // a raw 40-hex sha is accepted as-is (used to build on the official base commit)
+  if (/^[0-9a-f]{40}$/i.test(branch)) return branch.toLowerCase();
   const ref = await api(`/repos/${REPO}/git/ref/heads/${encodeURIComponent(branch)}`);
   return ref.object.sha;
 }
@@ -117,11 +120,11 @@ async function treeEntries(sha) {
   return entries;
 }
 
-async function upsertRef(branch, sha) {
+async function upsertRef(branch, sha, force = false) {
   try {
     await api(`/repos/${REPO}/git/refs/heads/${encodeURIComponent(branch)}`, {
       method: "PATCH",
-      body: JSON.stringify({ sha, force: false }),
+      body: JSON.stringify({ sha, force }),
     });
   } catch (error) {
     if (error.status !== 404 && error.status !== 422) throw error;
@@ -130,6 +133,16 @@ async function upsertRef(branch, sha) {
       body: JSON.stringify({ ref: `refs/heads/${branch}`, sha }),
     });
   }
+}
+
+async function listTracked(sourcePath) {
+  // git ls-files honours .gitignore, so model weights / caches never get pushed
+  const out = execFileSync(
+    "git",
+    ["ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", sourcePath],
+    { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+  );
+  return out.split("\0").filter(Boolean);
 }
 
 async function main() {
@@ -142,6 +155,7 @@ async function main() {
     args.paths = config.paths ?? args.paths;
     args.delete = config.delete ?? args.delete;
     args.keep = config.keep ?? args.keep;
+    args.force = config.force ?? args.force;
     args.message = config.message ?? args.message;
   }
   if (!args.branch || !args.base) throw new Error("--branch and --base are required");
@@ -157,20 +171,18 @@ async function main() {
     const [sourcePath, destPath] = localPath.includes("::")
       ? localPath.split("::")
       : [localPath, localPath];
-    const absolute = join(ROOT, sourcePath);
-    const info = await stat(absolute).catch(() => null);
-    if (!info) {
-      console.log(`skip (missing): ${sourcePath}`);
+    const files = await listTracked(sourcePath);
+    if (!files.length) {
+      console.log(`skip (no tracked files): ${sourcePath}`);
       continue;
     }
-    const files = info.isDirectory() ? await walk(absolute) : [absolute];
-    for (const file of files) {
-      const relativePath = relative(ROOT, file).split(sep).join("/");
-      if (isIgnored(relativePath)) continue;
-      const targetPath = info.isDirectory()
+    for (const relativePath of files) {
+      const file = join(ROOT, relativePath);
+      if (!existsSync(file)) continue;
+      const targetPath = relativePath.startsWith(`${sourcePath.replace(/\/$/, "")}/`)
         ? `${destPath.replace(/\/$/, "")}/${relativePath.slice(sourcePath.replace(/\/$/, "").length + 1)}`
         : destPath;
-      const content = await readFile(file);
+      const content = readFileSync(file);
       const blob = await api(`/repos/${REPO}/git/blobs`, {
         method: "POST",
         body: JSON.stringify({ content: content.toString("base64"), encoding: "base64" }),
@@ -214,9 +226,13 @@ async function main() {
       parents: [baseSha],
     }),
   });
-  await upsertRef(args.branch, commit.sha);
+  await upsertRef(args.branch, commit.sha, Boolean(args.force));
   console.log(`\n${args.branch}: ${commit.sha} (${uploaded} files uploaded, ${tree.length} blobs in tree)`);
   console.log(`https://github.com/${REPO}/tree/${args.branch}`);
 }
 
 await main();
+
+
+
+

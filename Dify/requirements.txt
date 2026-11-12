@@ -1,0 +1,16 @@
+# Dify 赛题项目依赖（本地可运行版：dify/app.py + dify/seekdb_service/）
+#
+# 安装：pip install -r requirements.txt
+# 运行：streamlit run app.py     （会自动拉起 seekdb 知识服务）
+#      python run.py             （命令行跑一次完整检索，CI/评审可直接执行）
+
+# --- seekdb 内核（真实数据库内核，非模拟） ---
+pylibseekdb==1.4.0.post2
+
+# --- 本地 bge-small-zh 向量化（INT8 ONNX，无需任何云端 API） ---
+onnxruntime==1.30.0
+tokenizers==0.23.3
+numpy>=1.26,<3
+
+# --- Web UI ---
+streamlit>=1.32,<2

@@ -4,18 +4,31 @@
 
     请帮我用 Python 写一个 Streamlit 应用，调用大模型 API 做一个「数据库代码审查助手」。
 
+并按赛题要求**真实接入 seekdb**：
+    * 审查依据来自 seekdb 的混合检索（本地 bge 向量 + IK 全文 + RRF，融合在 seekdb 内核内完成）；
+    * 每轮审查记录会**写回 seekdb**，可在界面上实时查回历史。
+
 运行：
 
     pip install -r requirements.txt
-    streamlit run app.py
+    streamlit run app.py          # 会自动拉起 seekdb 知识服务
 """
 
 from __future__ import annotations
 
 import json
 import os
+import sys
+from pathlib import Path
 
 import streamlit as st
+
+HERE = Path(__file__).resolve().parent
+# make the project importable no matter how the app is launched
+# (streamlit run / streamlit.testing AppTest / python -m)
+for extra in (HERE, HERE.parent / "Dify" / "seekdb_service"):
+    if str(extra) not in sys.path:
+        sys.path.insert(0, str(extra))
 
 from reviewer import (
     LEVELS,
@@ -26,6 +39,8 @@ from reviewer import (
     analyze,
     summarize,
 )
+import seekdb_bridge
+from auto_start import ensure_service  # noqa: E402
 
 st.set_page_config(
     page_title="数据库代码审查助手",
@@ -126,13 +141,29 @@ with st.sidebar:
     st.header("📋 规则集")
     st.caption("本地静态规则（无需 API）：15 条 OceanBase / MySQL 通用规则，详见 rules/sql_review_rules.md")
 
+    st.header("🔌 seekdb")
+    kb_url = st.text_input(
+        "seekdb 知识服务地址",
+        value=os.environ.get("SEEKDB_SERVICE_URL", "http://127.0.0.1:8848"),
+        help="dify/seekdb_service/serve.py 提供的混合检索服务（向量 + 全文 + RRF）",
+    )
+    use_kb = st.checkbox("用 seekdb 检索审查依据", value=True)
+    save_to_kb = st.checkbox("把审查记录写回 seekdb", value=True)
+    with st.spinner("连接/启动 seekdb…"):
+        status = ensure_service(kb_url)
+    if status.get("ok"):
+        st.success(f"seekdb 已就绪 · 模式 {status.get('mode')} · 知识块 {status.get('chunks')} · 历史 {status.get('reviews')}")
+    else:
+        st.warning(f"seekdb 未就绪：{status.get('error')}（规则审查仍然可用）")
+
 # --------------------------------------------------------------------------- #
 # Header
 # --------------------------------------------------------------------------- #
 st.title("🧐 数据库代码审查助手")
 st.markdown(
     "输入 SQL 或 DDL，助手先跑**确定性静态规则**（毫秒级、离线可用），"
-    "再可选调用大模型做**语义级深度审查**，最后导出 Markdown 评审报告。"
+    "再向 **seekdb** 检索相关「医书」作为审查依据，可选调用大模型做**语义级深度审查**，"
+    "最后把审查记录写回 seekdb 并导出 Markdown 报告。"
 )
 st.caption("生成方式：本项目由 Qoder AI IDE 生成并在本仓库增强；支持 OceanBase / seekdb / MySQL 语法。")
 
@@ -166,6 +197,20 @@ if run:
         if not include_ddl:
             findings = [item for item in findings if "create table" not in item.message.lower()]
 
+    # --- seekdb：检索审查依据（向量 + 全文 + RRF，融合在 seekdb 内核内完成） ---
+    kb_hits: list[dict] = []
+    if use_kb:
+        with st.spinner("正在 seekdb 里检索相关「医书」…"):
+            try:
+                kb_hits = seekdb_bridge.search_knowledge(sql[:500], kb_url, top_k=3)
+            except Exception as error:
+                st.warning(f"seekdb 检索失败：{error}")
+    if kb_hits:
+        with st.expander(f"📖 seekdb 检索到的依据（{len(kb_hits)} 条，来自 seekdb 混合检索）", expanded=True):
+            for hit in kb_hits:
+                st.markdown(f"**{hit.get('title', '')}** · {hit.get('source', '')}")
+                st.text((hit.get("text") or "")[:400])
+
     llm_result_text = ""
     llm_findings: list[Finding] = []
     if use_llm:
@@ -174,7 +219,10 @@ if run:
         else:
             with st.spinner(f"正在调用 {model} 做深度审查…"):
                 reviewer = LLMReviewer(base_url=base_url, model=model, api_key=api_key.strip())
-                result = reviewer.review(sql, extra_context)
+                context = "\n\n".join(
+                    f"[{i + 1}] {h.get('title', '')}\n{h.get('text', '')}" for i, h in enumerate(kb_hits)
+                )
+                result = reviewer.review(sql, extra_context=context)
             if result.ok:
                 llm_result_text = result.content
                 llm_findings = result.findings
@@ -183,6 +231,24 @@ if run:
 
     merged = findings + llm_findings
     counts = summarize(merged)
+
+    # --- seekdb：把本轮审查写回 seekdb（存储侧） ---
+    if save_to_kb:
+        try:
+            saved = seekdb_bridge.save_review(
+                sql=sql,
+                findings=[item.to_dict() for item in merged],
+                engine="rules+llm" if llm_findings else "rules",
+                summary=(
+                    f"阻断 {counts.get('error', 0)} / 警告 {counts.get('warn', 0)} / "
+                    f"提示 {counts.get('info', 0)}；seekdb 命中 {len(kb_hits)} 条依据"
+                ),
+                kb_hits=len(kb_hits),
+                base_url=kb_url,
+            )
+            st.caption(f"本轮审查已写入 seekdb（记录 id {saved.get('id')}，累计 {saved.get('reviews')} 条）")
+        except Exception as error:
+            st.warning(f"写回 seekdb 失败：{error}")
 
     st.subheader("③ 审查结果")
     c1, c2, c3 = st.columns(3)
@@ -212,5 +278,13 @@ if run:
         file_name="sql-review-report.json",
         mime="application/json",
     )
+
+    try:
+        history = seekdb_bridge.list_reviews(kb_url)
+    except Exception:
+        history = []
+    if history:
+        with st.expander(f"🗂️ seekdb 里的审查历史（{len(history)} 条，实时从 seekdb 查询）", expanded=False):
+            st.table(history)
 
     st.caption(f"目标数据库：{dialect}")

@@ -102,6 +102,10 @@ class Handler(BaseHTTPRequestHandler):
             docs = load_kb_documents()
             self._json({"docs": [{"title": d["title"], "source": d["source"]} for d in docs]})
             return
+        if self.path.rstrip("/") == "/reviews":
+            with STATE["lock"]:
+                self._json({"reviews": store.list_reviews(20)})
+            return
         self._json({"error": "not found"}, 404)
 
     def do_POST(self) -> None:  # noqa: N802
@@ -138,6 +142,20 @@ class Handler(BaseHTTPRequestHandler):
             with STATE["lock"]:
                 count = ingest(store, embedder, docs)
             self._json({"ok": True, "ingested": count, "chunks": store.count()})
+            return
+
+        if self.path.rstrip("/") == "/reviews":
+            # write one review round into seekdb (Qoder track: storage + query)
+            findings = payload.get("findings") or []
+            with STATE["lock"]:
+                review_id = store.write_review(
+                    engine=str(payload.get("engine", "rules")),
+                    sql_text=str(payload.get("sql", "")),
+                    findings=findings,
+                    summary=str(payload.get("summary", "")),
+                    kb_hits=int(payload.get("kb_hits", 0)),
+                )
+            self._json({"ok": True, "id": review_id, "reviews": store.review_count()})
             return
 
         self._json({"error": "not found"}, 404)
@@ -181,3 +199,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

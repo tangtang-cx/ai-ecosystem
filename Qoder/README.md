@@ -1,103 +1,156 @@
-# Qoder 赛题交付物：数据库代码审查助手
+# Qoder 赛题交付物：数据库代码审查助手（seekdb 医书版）
 
-> 题目要求：用 Qoder 的 AI 在云端生成代码，并把项目发布成可访问的链接。
-> 本目录是 **Qoder 生成 + 本仓库增强** 的完整项目：`app.py`（Streamlit UI）、
-> `reviewer.py`（静态规则引擎 + OpenAI 兼容客户端）、`rules/`（规则文档）、`tests/`（单测）。
+> 题目：**Build with Qoder——用 Qoder 做一个让学习、科研和工作更效���的项目**。
+> 要求：项目必须用 Qoder 开发，**实际使用 seekdb 或 PowerContext 中的至少一种**，
+> 并通过 **Qoder Sites** 发布项目网站。
+> 本目录：Qoder 生成的 Streamlit 应用 + **真实接入 seekdb**（检索审查依据 + 审查记录写回），
+> 附运行说明、验证样例与 Qoder 开发记录模板。
 
 ---
 
-## 1. 交付物清单
+## 1. 两个组件的分工（赛题要求的「指定技术实际发挥作用」）
+
+| 组件 | 作用 | 在流程里的实际体现（可核对） |
+| --- | --- | --- |
+| **Qoder** | 承担项目主要开发工作 | 界面与主体代码由 Qoder 生成（提示词见 `PROMPT.md`），增强点见 `PROMPT.md` §3 |
+| **seekdb** | 数据存储、查询与检索 | ① 审查前用 **seekdb 混合检索**（本地 bge 向量 + IK 全文 + **RRF 融合在 seekdb 内核内**）取回相关「医书」条目作为审查依据，界面里可展开核对原文；② 每轮审查结果**写回 seekdb**（表 `qoder_review_log`），侧栏「🗂️ 审查历史」实时从 seekdb 查回 |
+
+**不是「只装组件、只测连接」**：每次点「开始审查」都会真实走一遍
+「seekdb 检索 → 模型（可选）作答 → 写回 seekdb」，并在界面上显示命中条数、写入的记录 id 与累计条数。
+
+---
+
+## 2. 交付物清单
 
 | 文件 | 说明 |
 | --- | --- |
-| `app.py` | Streamlit 主程序（侧边栏模型配置 + SQL 输入 + 三级结果 + 报告导出） |
+| `app.py` | Streamlit 主程序（模型配置 + SQL 输入 + 三级结果 + 报告导出 + seekdb 接入） |
 | `reviewer.py` | 15 条确定性静态规则 + OpenAI 兼容 LLM 客户端（仅标准库） |
+| `seekdb_bridge.py` | seekdb 桥接层（检索 / 写回 / 查历史，服务不可用时优雅降级） |
 | `rules/sql_review_rules.md` | 规则说明，编号与实现一一对应 |
-| `tests/test_rules.py` | 22 个单测，覆盖每条规则的「触发 / 不触发」样例 |
+| `tests/test_rules.py` / `tests/test_app_smoke.py` | 22 + 1 个用例（规则触发/不触发 + Streamlit UI 冒烟） |
+| `PROMPT.md` | Qoder 提示词、生成物与增强点对照表、**Qoder Sites 发布步骤**、开发记录截图清单 |
 | `requirements.txt` / `.env.example` | 依赖与配置样例 |
-| `PROMPT.md` | 在 Qoder 里用的提示词、生成物与增强点对照表、Qoder Sites 发布步骤 |
-| `screenshots/` | Qoder 对话截图 + 发布链接截图（见 `PROMPT.md` §5） |
+| `screenshots/` | Qoder 对话截图 + Sites 发布截图 + 运行界面（见 `PROMPT.md` §5） |
 
-在线演示（公网 Demo，已实测 HTTP 200）：
+在线演示：
 
 ```text
-https://clocks-remains-claire-serious.trycloudflare.com
+公网 Demo（cloudflared 隧道，地址会变）：https://clocks-remains-claire-serious.trycloudflare.com
+Qoder Sites（永久链接，发布后回填）：https://________________.qoder.site
 ```
-
-> 该地址由本机的 cloudflared 隧道暴露（隧道地址会变）。要**永久**链接请按 `PROMPT.md` §4
-> 发布到 Qoder Sites，拿到 `*.qoder.site` 后回填到本文件与根 README 的「作品链接」表。
 
 ---
 
-## 2. 本地运行
+## 3. 运行说明（评审可按此复现）
+
+### 3.1 环境
+
+| 项 | 版本 / 要求 |
+| --- | --- |
+| Python | 3.10+（实测 3.13） |
+| 依赖 | `pip install -r requirements.txt`（streamlit / pylibseekdb / onnxruntime / tokenizers / numpy，均为实测无冲突版本） |
+| 模型文件 | `stepfun/public/models/bge-small-zh-v1.5`（tokenizer.json + onnx/model_int8.onnx，22.8 MiB）。仓库不提交大文件，用 `npm run model:fetch`（在 `stepfun/` 下）或直接下载 model repo 获取 |
+| seekdb | 嵌入式（`pylibseekdb`，零外部依赖）或服务端（`oceanbase/seekdb` 容器，见 `../dify/seekdb_service/docker-compose.yml`） |
+| 大模型 | 可选。魔搭 `MODELSCOPE_API_KEY` / StepFun `STEPFUN_API_KEY` / MiniMax `MINIMAX_API_KEY`，均为 OpenAI 兼容；**不填也能跑**（规则 + seekdb 检索） |
+
+### 3.2 启动
 
 ```bash
-cd Qoder
+cd qoder
 pip install -r requirements.txt
 
-# 二选一：填 API Key（魔搭 / StepFun / MiniMax 都行），或留空只跑离线规则
-export MODELSCOPE_API_KEY=xxxxxxxx     # 或 STEPFUN_API_KEY / MINIMAX_API_KEY
+# 方式 A：一键（应用会自动拉起 seekdb 服务）
+streamlit run app.py
 
+# 方式 B：先单独起服务（两个终端）
+python ../dify/seekdb_service/serve.py --port 8848
 streamlit run app.py
 ```
 
-浏览器打开 <http://localhost:8501>。
+打开 <http://localhost:8501>。左侧应显示「seekdb 已就绪 · 模式 embedded · 知识块 19」。
 
-### 跑测试
+### 3.3 Qoder Sites 发布
+
+1. Qoder 里打开本项目目录（`qoder/`）。
+2. Sites → 选择 Streamlit 模板 → 启动命令：
+
+   ```bash
+   pip install -r requirements.txt && streamlit run app.py --server.port $PORT
+   ```
+
+3. 环境变量：`MODELSCOPE_API_KEY`（或 StepFun / MiniMax 的 Key），以及 `SEEKDB_SERVICE_URL`。
+4. 可见范围设为「任何人都可访问」→ 发布 → 拿到 `*.qoder.site`。
+
+---
+
+## 4. 验证样例（初始数据 → 输入 → 步骤 → 预期结果）
+
+### 样例 A：慢查询 + 深分页（默认示例）
+
+**输入**
+
+```sql
+SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id
+WHERE DATE(o.created_at) = '2026-01-01'
+  AND c.city LIKE '%杭州%'
+ORDER BY o.created_at DESC
+LIMIT 20, 200000;
+```
+
+**步骤**：选中示例「慢查询 / 深分页」→ 点「🚀 开始审查」。
+
+**预期结果**
+
+- 指标：**阻断 0 / 警告 3 / 提示 1**（OB-004 `SELECT *`、OB-005 `LIKE '%…'`、OB-006 索引列被函数包裹、OB-007 深分页、OB-013 缺执行计划）；
+- 展开「📖 seekdb 检索到的依据」：应出现来自 `01-seekdb-向量库速查.md` / `02-混合检索与RRF.md` 的**真实段落**（这证明 seekdb 检索确实生效，不是内置字符串）；
+- 底部提示「本轮审查已写入 seekdb（记录 id …，累计 N 条）」。
+
+### 样例 B：全表更新（阻断级）
+
+**输入**：`UPDATE orders SET status = 'ARCHIVED';`
+
+**预期结果**：指标「🔴 阻断 = 1」，条目 `OB-001 UPDATE / DELETE 缺少 WHERE`，并写入 seekdb。
+
+### 样例 C：seekdb 向量建表（正确写法，不应报警）
+
+**输入**：示例「OceanBase 向量检索」。
+
+**预期结果**：无阻断项；`OB-003` 不触发（表里有 PRIMARY KEY）。
+
+### 样例 D：核对 seekdb 的写入与查询（命令行）
 
 ```bash
-cd Qoder
-python tests/test_rules.py -v      # 22 passed in 0.003s
+curl http://127.0.0.1:8848/health
+# {"ok":true,"mode":"embedded","chunks":19,"reviews":3,...}
+```
+
+`reviews` 随每次审查递增 —— 这是「指定技术实际发挥作用」的可核对记录。
+
+### 样例 E：离线自测
+
+```bash
+python tests/test_rules.py -v       # 22 passed
+python tests/test_app_smoke.py -v   # 1 passed（Streamlit AppTest 真实点一次审查）
 ```
 
 ---
 
-## 3. 功能一览
+## 5. Qoder 开发记录（提交材料之一）
 
-1. **离线规则引擎**（默认开启，毫秒级）
-   15 条规则分三级：`🔴 阻断`（UPDATE/DELETE 无 WHERE、JOIN 无 ON、建表无主键）、
-   `🟠 警告`（SELECT \*、LIKE '%x'、索引列被函数包裹、深分页、NOT IN 与 NULL、IN 过长、FOR UPDATE 无 WHERE）、
-   `🔵 提示`（UNION 去重、TRUNCATE、缺 EXPLAIN、隐式类型转换、COUNT(1)）。
-2. **大模型深度审查**（可切换）
-   走 OpenAI 兼容协议，预置魔搭 / StepFun / MiniMax / OpenAI 四套 endpoint，
-   模型返回 JSON 后自动解析成同样格式的三级结果。
-3. **报告导出**：Markdown 评审报告 + JSON（可接 CI 卡口）。
-4. **示例 SQL**：慢查询深分页、全表更新、缺主键建表、NOT IN 空集陷阱、seekdb 向量建表。
-5. **附加上下文**：可补充表结构、数据量、慢查询耗时，提升模型判断准确度。
+`PROMPT.md` 里给了：
 
----
+- §1 提交给 Qoder 的**原始提示词**与追加迭代提示词；
+- §3 **Qoder 生成物 vs 本仓库增强点**对照表（界面/审查逻辑/模型接入/健壮性/规则文档/测试）；
+- §4 Qoder Sites 发布步骤；
+- §5 **截图清单**（`01-qoder-chat.png` 对话+diff、`02-qoder-files.png` 工程树、`03-qoder-sites.png` 发布链接、`04-app-running.png` 运行界面）。
 
-## 4. 架构
-
-```text
-app.py  ──输入 SQL──► reviewer.analyze()      # 确定性规则（标准库 re）
-        │                     └─► Finding[]    # id / level / message / suggestion / snippet
-        ├──(可选)──► reviewer.LLMReviewer      # OpenAI 兼容 HTTP（urllib）
-        │                     └─► LLMResult    # content + 解析出的 Finding[]
-        └────────────────► 合并排序 → 三级展示 → Markdown / JSON 导出
-```
-
-`LLMReviewer` 只用 `urllib` 发请求，所以**不需要安装 openai SDK**，
-换 provider 只是改 Base URL 和模型名。
-
----
-
-## 5. 与题目要求的对应关系
-
-| 题目要求 | 本项目 |
-| --- | --- |
-| 用 Python 写 Streamlit 应用 | ✅ `app.py`，`streamlit run app.py` |
-| 调用大模型 API | ✅ OpenAI 兼容 `chat/completions`，四家 provider 预置 |
-| 主题是「数据库代码审查助手」 | ✅ 15 条规则 + LLM 语义审查，输出三级评审报告 |
-| 在 Qoder 云端环境跑起来 | 见 `PROMPT.md` §4 的 Qoder Sites 发布步骤 |
-| 截图证明是 Qoder 生成 | `screenshots/01-qoder-chat.png`（含提示词与生成 diff） |
+提交时附 **Qoder 账号 UID**（用于核对站点归属与使用记录）。
 
 ---
 
 ## 6. 已知边界
 
-- 静态规则基于正则，只覆盖通用反模式，**不替代** `EXPLAIN` 与压测；
-  规则 OB-013 会主动提醒补执行计划。
-- LLM 审查结果依赖所选模型能力；模型不可用时应用不会崩，只跳过 LLM 层。
-- 未接入真实数据库连接，因此不做「实际执行计划分析」；如果评测需要，
-  可在 `reviewer.py` 增加 `EXPLAIN` 采集层。
+- 静态规则基于正则，只覆盖通用反模式，**不替代** `EXPLAIN` 与压测；规则 OB-013 会主动提醒补执行计划。
+- LLM 审查依赖所选模型能力；模型不可用时应用不会崩，只跳过 LLM 层。
+- seekdb 服务不可用时自动降级：规则审查照常，界面提示「seekdb 未就绪」。

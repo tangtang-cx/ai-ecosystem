@@ -1,1 +1,5 @@
-streamlit>=1.32
+streamlit>=1.32,<2
+pylibseekdb==1.4.0.post2
+onnxruntime==1.30.0
+tokenizers==0.23.3
+numpy>=1.26,<3

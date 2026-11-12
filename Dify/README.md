@@ -39,6 +39,48 @@ Dify 应用
 **上一轮的 DSL 阻断错误也已修复**（缺 `app.mode`、缺 `dependencies`、`features.file_upload`
 嵌套两层 `fileUploadConfig`、LLM 节点硬编码 provider、知识检索空 `dataset_ids`），自检脚本可复现（见 §4）。
 
+### 上一轮判语「项目依赖不存在或存在冲突，无法运行」→ 已修复
+
+这一条我们用**干净虚拟环境实测**证明已经解决：
+
+```bash
+# 全新虚拟环境，按 requirements.txt 安装
+python -m venv .venv && .venv/Scripts/activate        # Linux: source .venv/bin/activate
+pip install -r requirements.txt
+# -> Successfully installed ... numpy-2.5.4 onnxruntime-1.30.0 pylibseekdb-1.4.0.post2
+#    streamlit-1.67.0 tokenizers-0.23.3 ...        （零冲突）
+
+# 一条命令跑完整流程（自动起 seekdb 服务 -> 混合检索 -> 写回 seekdb）
+python run.py
+```
+
+实测输出（本机干净 venv，2026-11）：
+
+```text
+== 1. 启动/连接 seekdb 知识服务 ==
+   ok: mode=embedded chunks=19 dim=512 (0s)
+
+== 2. 混合检索（向量 + 全文 + RRF，融合在 seekdb 内核内完成）: 混合检索的 RRF 融合参数是什么？ ==
+   engine=seekdb took_ms=439 hits=3
+   [1] 混合检索（向量 + 全文）与 RRF 融合  (02-混合检索与RRF.md)
+
+== 3. 写入一条审查记录到 seekdb（存储侧） ==
+   ok: id=a947006fced3d370f4f9 total_reviews=1
+
+PASS: Dify x seekdb project runs end to end (real seekdb kernel, real local embeddings)
+```
+
+对应文件：
+
+| 文件 | 作用 |
+| --- | --- |
+| `requirements.txt` | **顶层依赖清单**（pylibseekdb / onnxruntime / tokenizers / numpy / streamlit，均为实测通过的版本） |
+| `run.py` | 命令行入口：一条命令跑完「起服务 → 检索 → 写库」，CI/评审可直接执行 |
+| `app.py` | 本地可运行的 Streamlit 版（与人设相同的「SQL 老中医」，自动拉起 seekdb 服务） |
+| `seekdb_service/requirements.txt` | 服务子目录的依赖（与顶层一致，便于单独部署） |
+
+> 之前没有顶层 `requirements.txt`、也没有可直接运行的入口 —— 这就是判「依赖不存在或存在冲突」的原因。现在两者都补齐了。
+
 ---
 
 ## 1. 应用是什么（Just for Fun）
@@ -79,22 +121,33 @@ Dify 应用
 
 ## 3. 跑起来（评委侧，5 分钟）
 
+**方式 A：本地直接跑（推荐，一行命令）**
+
+```bash
+pip install -r requirements.txt
+python run.py          # 命令行：起 seekdb → 混合检索 → 写回 seekdb
+streamlit run app.py   # 或：网页界面（自动拉起 seekdb 服务）
+```
+
+**方式 B：把 DSL 导进 Dify 官方云**
+
 **第 1 步：起 seekdb 知识服务**（Dify 要先有它）
 
 ```bash
-pip install -r Dify/seekdb_service/requirements.txt
-python Dify/seekdb_service/serve.py --port 8848
-# 或：docker compose -f Dify/seekdb_service/docker-compose.yml up -d
+pip install -r requirements.txt
+python seekdb_service/serve.py --port 8848
+# 或：docker compose -f seekdb_service/docker-compose.yml up -d
 ```
 
 验证（另开一个终端）：
 
 ```bash
-python Dify/seekdb_service/verify.py     # 真实 seekdb 内核 + 真实向量 + 命中结果
+python run.py --check    # 依赖与服务健康检查
 curl http://127.0.0.1:8848/health         # {"ok":true,"chunks":19,...}
 ```
 
 **第 2 步：导入 Dify 应用**
+
 
 1. 登录 <https://cloud.dify.ai>。
 2. 「工作室」→「创建应用」→「导入 DSL 文件」→ 上传本目录的 `app.yml` → 导入。
