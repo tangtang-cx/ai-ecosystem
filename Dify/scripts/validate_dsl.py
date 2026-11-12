@@ -27,9 +27,9 @@ NODE_TYPES = {
     "llm",
     "answer",
     "knowledge-retrieval",
+    "http-request",
     "template",
     "code",
-    "http-request",
     "tool",
     "if-else",
     "iteration",
@@ -201,6 +201,30 @@ def validate(path: Path) -> Report:
                     report.error(message)
             if not isinstance(data_block.get("multiple_retrieval_config"), dict):
                 report.warn(f"知识检索节点 `{node_id}` 缺少 `multiple_retrieval_config`")
+
+        if node_type == "http-request":
+            method = str(data_block.get("method", "")).lower()
+            url = str(data_block.get("url", "")).strip()
+            if not url:
+                report.error(f"HTTP 节点 `{node_id}` 缺少 `url`")
+            elif not url.startswith(("http://", "https://")):
+                report.error(f"HTTP 节点 `{node_id}` 的 url 非法：{url!r}")
+            if method not in {"get", "post", "put", "patch", "delete", "head"}:
+                report.error(f"HTTP 节点 `{node_id}` 的 method 非法：{method!r}")
+            body = data_block.get("body")
+            if isinstance(body, dict) and body.get("type") == "json":
+                items = body.get("data")
+                if not isinstance(items, list) or not items:
+                    report.error(f"HTTP 节点 `{node_id}` 的 json body 为空")
+                else:
+                    for item in items:
+                        if not isinstance(item, dict) or "value" not in item:
+                            report.error(f"HTTP 节点 `{node_id}` 的 body 条目缺少 `value`")
+                        elif "id" not in item:
+                            report.error(f"HTTP 节点 `{node_id}` 的 body 条目缺少 `id`")
+            elif method in {"post", "put", "patch"}:
+                report.warn(f"HTTP 节点 `{node_id}` 是 {method} 但没有 json body")
+            report.note(f"HTTP 节点 `{node_id}` 会真实调用 {url}")
 
         if node_type == "llm":
             model = data_block.get("model")
