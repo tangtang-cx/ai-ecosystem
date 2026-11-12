@@ -7,6 +7,7 @@
 | --- | --- | --- |
 | `dify/` | Dify：Just for Fun，做一个好玩的智能应用 | 应用 DSL（`app.yml`）+ **真·seekdb 知识服务** + 知识库原文 + DSL 校验器 |
 | `qoder/` | Qoder：Build with Qoder | 数据库代码审查助手（**接 seekdb 检索与存储**）+ 运行说明 + 验证样例 |
+| **Qoder 项目网站** | `https://sql-review-assistant-8ptbxy0nhc9.qoder.zone/` | ✅ 已发布到 Qoder Sites，未登录 HTTP 200（浏览器端 15 条规则可交互） |
 | `gaode/` | 高德：周边去哪儿 | `SKILL.md`（评测平台直接加载） |
 | `stepfun/` | StepFun：端侧 AI 推理 + seekdb 混合检索 | 浏览器端 INT8 embedding + seekdb 内 RRF 检索 + 技术说明 |
 | `minimax/` | MiniMax | MiniMax × seekdb 的 SQL 处方助手 |

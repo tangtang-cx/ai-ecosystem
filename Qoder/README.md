@@ -1,5 +1,17 @@
 # Qoder 赛题交付物：数据库代码审查助手（seekdb 医书版）
 
+## ★ 已发布的项目网站（提测填这个）
+
+```text
+https://sql-review-assistant-8ptbxy0nhc9.qoder.zone/
+```
+
+- 未登录访问返回 **HTTP 200**，页面标题「数据库代码审查助手 · Qoder × seekdb」；
+- 页面是本目录 `site/index.html` 的发布版：**浏览器内可直接跑 15 条规则**
+  （粘 SQL → 点「开始审查」→ 三级结果），并含真实截图、seekdb 表结构与
+  `DBMS_HYBRID_SEARCH` 检索链路、运行说明、验证样例、仓库链接；
+- 两张截图在站点上实测可加载（HTTP 200 / image/png）。
+
 > 题目：**Build with Qoder——用 Qoder 做一个让学习、科研和工作更效���的项目**。
 > 要求：项目必须用 Qoder 开发，**实际使用 seekdb 或 PowerContext 中的至少一种**，
 > 并通过 **Qoder Sites** 发布项目网站。

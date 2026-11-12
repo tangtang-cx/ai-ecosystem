@@ -149,8 +149,9 @@ request = urllib.request.Request(
 
 | 内容 | 位置 |
 | --- | --- |
+| **项目网站（已发布，公开可访问）** | `https://sql-review-assistant-8ptbxy0nhc9.qoder.zone/` |
 | Qoder 对话 + 生成 diff | ⏳ `qoder/screenshots/01-qoder-chat.png`（发布后补） |
-| Qoder Sites 公网链接 | ⏳ `qoder/screenshots/03-qoder-sites.png`（发布后补） |
+| Qoder Sites 发布截图 | ⏳ `qoder/screenshots/03-qoder-sites.png`（发布后补） |
 | 应用运行界面（已自动实拍） | ✅ `qoder/screenshots/04-app-home.png`、`05-app-review-results.png` |
 | 运行说明 + 验证样例（4 组，可按步骤执行） | ✅ `qoder/README.md` §2、§3 |
 | Qoder 开发记录清单（截图位 + 账号 UID） | ✅ `qoder/README.md` §4 |

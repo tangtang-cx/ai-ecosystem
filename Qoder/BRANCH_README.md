@@ -10,6 +10,15 @@
 | 分支 | `qoder` |
 | Commit SHA | 取该分支最新 commit 的完整 40 位 SHA（见 <https://github.com/tangtang-cx/ai-ecosystem/commits/qoder>） |
 
+## 项目网站（已发布，公开可访问）
+
+```text
+https://sql-review-assistant-8ptbxy0nhc9.qoder.zone/
+```
+
+未登录 HTTP 200；页面内含浏览器端 15 条规则交互演示、真实截图、seekdb 表结构与
+`DBMS_HYBRID_SEARCH` 检索链路、运行说明、验证样例与仓库链接。
+
 ## 提交物
 
 ```text
