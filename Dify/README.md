@@ -6,6 +6,38 @@
 
 ---
 
+## 0. 当前线上作品链接（已实测存活）
+
+| 项 | 值 |
+| --- | --- |
+| **作品链接** | `https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ` |
+| 应用名 | 我的问答助手 |
+| appId | `6af43fdc657c1ade990e7dd0` |
+| shareId | `cbW1j7q9td1AOUZZcakQbgiZ` |
+| 知识库 datasetId | `PvxGnL0sbXZQu1owx1QAX65S` |
+| 实测 | HTTP 200，页面标题「分享的对话」，可公开访问（2026-11 验证） |
+
+> ⚠️ **平台说明（务必看清）**：这个链接是 **FastGPT**（`cloud.fastgpt.cn`）上的应用，
+> 不是 Dify 官方云（`cloud.dify.ai`）——datasetId 是 24 位 FastGPT 格式（Dify 是 UUID），
+> 可以确认用的是 FastGPT。
+> 如果评测要求**必须是 Dify 官方域名**，请按 §2 走 Dify 官方流程：
+> 导入本目录的 `app.yml`，1 分钟得到 `https://cloud.dify.ai/chat/share?shareId=...` 链接。
+> 两种平台都指向同一套知识库内容（本目录 `kb/`），交付物完全复用。
+
+### 把本目录的知识库灌进 FastGPT 现有 dataset
+
+`PvxGnL0sbXZQu1owx1QAX65S` 只有一个 id，没有 API Key 是写不进去的。
+拿到 FastGPT API Key（账号 → 个人设置 → API 密钥，形如 `fastgpt-xxxxxxxx`）后：
+
+```bash
+export FASTGPT_API_KEY=fastgpt-xxxxxxxx
+python scripts/push_docs_to_fastgpt.py --dataset-id PvxGnL0sbXZQu1owx1QAX65S
+```
+
+脚本会把 `kb/` 下 4 篇文档上传进该知识库并回显文档列表（分块数、token 数）。
+
+---
+
 ## 1. 交付物清单
 
 | 文件 | 作用 |
@@ -13,13 +45,15 @@
 | `app.yml` | Dify 应用 DSL（知识检索 + LLM + 直接回复），**一键导入** |
 | `kb/*.md` | 知识库原文 4 篇（建表 / 混合检索 / 端侧量化 / AMD GPU 加速） |
 | `scripts/setup_knowledge.py` | 一键建知识库 + 上传文档 + 导入 DSL（可选自动化） |
+| `scripts/push_docs_to_fastgpt.py` | 把 `kb/` 灌进已有 FastGPT dataset（现网作品链接对应的那一个） |
 | `screenshots/` | 平台截图放置目录（见 §5） |
 
 已发布的在线地址（导入后你自己的链接填在这里）：
 
 ```text
-应用分享链接：https://cloud.dify.ai/chat/share?shareId=________________
-知识库：OceanBase-Vector-DB
+作品链接：https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ
+知识库：PvxGnL0sbXZQu1owx1QAX65S
+Dify 官方版（导入 app.yml 后）：https://cloud.dify.ai/chat/share?shareId=________________
 ```
 
 ---

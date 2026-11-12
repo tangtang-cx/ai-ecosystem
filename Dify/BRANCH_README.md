@@ -25,6 +25,18 @@ Dify/
   .env.example             # 配置样例
 ```
 
+## 作品链接（已实测存活）
+
+| 项 | 值 |
+| --- | --- |
+| 作品链接 | `https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ` |
+| 应用名 / appId | 我的问答助手 / `6af43fdc657c1ade990e7dd0` |
+| 知识库 datasetId | `PvxGnL0sbXZQu1owx1QAX65S` |
+| 实测 | HTTP 200，标题「分享的对话」，可公开访问 |
+
+> 该链接是 **FastGPT**（`cloud.fastgpt.cn`）上的应用——datasetId 是 24 位 FastGPT 格式（Dify 是 UUID）。
+> 若评测要求 Dify 官方域名，用下面的 `app.yml` 在 cloud.dify.ai 导入后发布即可得到同款链接。
+
 ## 评测怎么跑（评委侧，5 分钟）
 
 1. 登录 <https://cloud.dify.ai>。
