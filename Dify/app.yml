@@ -1,56 +1,55 @@
 app:
-  description: 基于 OceanBase / seekdb 向量库文档的 RAG 问答助手。知识库由 Dify
-    知识检索节点提供，检索到的片段注入 LLM 上下文后作答。
-  icon: 📚
+  description: SQL 老中医 · 数据库问诊室。把 SQL、报错信息或「数据库不舒服」的描述交给老中医，
+    给出症状诊断、可直接复制的药方、忌口清单与养生建议。
+  icon: 🩺
   icon_background: '#EFF1F5'
-  name: OceanBase 向量库文档助手
+  icon_type: emoji
+  mode: advanced-chat
+  name: SQL 老中医 · 数据库问诊室
   use_icon_as_answer_icon: false
+dependencies: []
 kind: app
-version: 0.1.5
+version: 0.6.0
 workflow:
   conversation_variables: []
+  environment_variables: []
   features:
     file_upload:
       allowed_file_extensions:
+        - .sql
         - .md
         - .txt
-        - .pdf
       allowed_file_types:
         - custom
       allowed_file_upload_methods:
         - local_file
         - remote_url
-      enabled: false
+      enabled: true
       fileUploadConfig:
+        attachment_image_file_size_limit: 2
         audio_file_size_limit: 50
-        allowed_file_extensions:
-          - .md
-          - .txt
-          - .pdf
-        allowed_file_types:
-          - custom
-        enabled: false
-        fileUploadConfig:
-          audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
         image_file_size_limit: 10
-        number_limits: 3
-        image:
-          enabled: false
-          number_limits: 3
-          transfer_methods:
-            - local_file
-            - remote_url
-        ocr:
-          enabled: false
+        single_chunk_attachment_limit: 10
         video_file_size_limit: 100
-        video:
-          enabled: false
-          number_limits: 3
-          transfer_methods:
-            - local_file
-            - remote_url
-    opening_statement: 您好，我是 OceanBase / seekdb 向量库文档助手。\n可以问我：HNSW 索引怎么建？混合检索的
-      RRF 融合怎么写？端侧 INT8 量化对召回有影响吗？AMD GPU 加速 HNSW 的收益点在哪？
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+          - local_file
+          - remote_url
+      number_limits: 3
+    opening_statement: >-
+      🩺 欢迎来到「SQL 老中医 · 数据库问诊室」！\n\n把病历交给我：贴一段 SQL、甩一条报错，
+      或者用大白话说「我的查询像老牛拉车」。\n\n我会按老中医的套路给你开方：\n
+      1. 🩺 望闻问切 —— 病灶在哪\n2. 💊 药方 —— 可直接复制的改写版 SQL\n
+      3. 🚫 忌口 —— 哪些写法千万别碰\n4. 🧘 养生建议 —— 平时怎么保养数据库\n
+      5. 🎋 医嘱小笺 —— 一句话俏皮话\n\n主治病症：慢查询、深分页、全表扫、锁等待、
+      索引失效、写入抖动、向量检索不准……
     retriever_resource:
       enabled: true
     sensitive_word_avoidance:
@@ -58,10 +57,10 @@ workflow:
     speech_to_text:
       enabled: false
     suggested_questions:
-      - HNSW 向量索引的建表语句是什么？
-      - 混合检索（向量 + 全文）如何用 RRF 融合？
-      - OceanBase 向量检索支持哪些距离度量？
-      - 端侧 INT8 量化会损失多少召回率？
+      - 我的查询像老牛拉车，一跑就是三十秒，怎么治？
+      - 老中医，SELECT * 到底错在哪？
+      - 深分页 OFFSET 100000 有没有更好的药方？
+      - 向量检索总是搜不准，是不是 HNSW 建索引的方式不对？
     suggested_questions_after_answer:
       enabled: false
     text_to_speech:
@@ -70,49 +69,26 @@ workflow:
       voice: ''
   graph:
     edges:
-      - id: start-source-kb-target
+      - id: start-llm
         source: start
-        target: kb
         sourceHandle: source
-        targetHandle: target
-        type: custom
-        zIndex: 0
-        selected: false
-        data:
-          sourceType: start
-          targetType: knowledge-retrieval
-      - id: kb-source-llm-target
-        source: kb
         target: llm
-        sourceHandle: source
         targetHandle: target
-        type: custom
-        zIndex: 0
-        selected: false
-        data:
-          sourceType: knowledge-retrieval
-          targetType: llm
-      - id: llm-source-answer-target
+      - id: llm-answer
         source: llm
-        target: answer
         sourceHandle: source
+        target: answer
         targetHandle: target
-        type: custom
-        zIndex: 0
-        selected: false
-        data:
-          sourceType: llm
-          targetType: answer
     nodes:
       - id: start
         type: custom
         position:
-          x: 30
-          y: 280
+          x: 80
+          y: 282
         positionAbsolute:
-          x: 30
-          y: 280
-        width: 244
+          x: 80
+          y: 282
+        width: 242
         height: 90
         sourcePosition: right
         targetPosition: left
@@ -123,103 +99,92 @@ workflow:
           desc: ''
           variables: []
           selected: false
-      - id: kb
-        type: custom
-        position:
-          x: 360
-          y: 270
-        positionAbsolute:
-          x: 360
-          y: 270
-        width: 244
-        height: 100
-        sourcePosition: right
-        targetPosition: left
-        selected: false
-        data:
-          type: knowledge-retrieval
-          title: 知识检索
-          desc: ''
-          dataset_ids: []
-          retrieval_mode: multiple
-          multiple_retrieval_config:
-            top_k: 4
-            score_threshold_enabled: false
-            score_threshold: null
-            reranking_enable: false
-            reranking_mode: reranking_model
-            reranking_model:
-              reranking_provider_name: ''
-              reranking_model_name: ''
-          selected: false
       - id: llm
         type: custom
         position:
-          x: 690
-          y: 270
+          x: 400
+          y: 282
         positionAbsolute:
-          x: 690
-          y: 270
-        width: 244
+          x: 400
+          y: 282
+        width: 242
         height: 98
         sourcePosition: right
         targetPosition: left
         selected: false
         data:
           type: llm
-          title: 生成回答
+          title: 老中医坐诊
           desc: ''
           model:
-            provider: tongyi
-            name: qwen-plus
+            provider: ''
+            name: ''
             mode: chat
             completion_params:
-              temperature: 0.1
+              temperature: 0.8
               max_tokens: 2048
           prompt_template:
-            - id: sys
-              role: system
-              text: |-
-                你是 OceanBase / seekdb 向量数据库的资深工程师，正在为第六届 OceanBase 数据库大赛的参赛作品答疑。
-                请严格依据【知识库上下文】回答问题，引用上下文中的原文片段并给出出处标题。
-                如果上下文不足以回答，请明确说明「知识库中没有覆盖这一点」，并给出可以自行验证的方向，不要编造 API。
-                涉及建表语句、SQL、函数名时，请使用可直接复制的代码块。
-            - id: usr
-              role: user
-              text: |-
-                【知识库上下文】
-                {{#context#}}
-
-                【用户问题】
-                {{#sys.query#}}
+            - role: system
+              text: >-
+                你是「SQL 老中医」，一位专治数据库疑难杂症的老派中医，兼 OceanBase /
+                seekdb 资深工程师。你的风格是「先讲人话，再上硬货」：用中医把脉的比喻解释病灶，
+                但每一句技术结论都要准确、可执行。
+                严格按下面的结构回答，使用 Markdown 分节，不要输出开头的寒暄：
+                ### 🩺 望闻问切（病灶诊断）
+                用 2-4 条列出这段 SQL / 报错 / 现象里的具体问题，每条说明「症状 → 病因」。
+                ### 💊 药方（可直接复制）
+                给出优化后的完整 SQL 或配置片段，能直接粘贴运行；给出前后对比。
+                ### 🚫 忌口（千万别写）
+                列出这次病历里出现的、会导致性能或正确性问题的写法，并说明原因。
+                ### 🧘 养生建议
+                2-3 条平时就该做的工程实践（索引设计、参数、分批、监控等）。
+                ### 🎋 医嘱小笺
+                一句俏皮的中医味收尾，同时点出最该先改的那一处。
+                技术要求：涉及 OceanBase / seekdb 时，必须使用真实且正确的语法，例如
+                向量列写作 VECTOR(n)；HNSW 索引写作
+                VECTOR INDEX idx (embedding) WITH(distance=cosine, type=hnsw, lib=vsag,
+                m=16, ef_construction=200, ef_search=64)；
+                全文索引用 FULLTEXT INDEX ... WITH PARSER ik；
+                写入后需要刷新索引（dbms_index_manager.refresh()）。
+                不要编造不存在的函数、参数或表；如果用户给的 SQL 里没有足够信息判断，
+                就明确说「病历不足」，并列出还需要哪些信息（表结构、数据量、执行计划）。
+                用户如果只描述现象而没给 SQL，先给出最可能的 3 个病因，并请对方贴出 SQL 或 EXPLAIN 结果。
+            - role: user
+              text: '{{#sys.query#}}'
           context:
-            enabled: true
-            variable_selector:
-              - kb
-              - result
+            enabled: false
+            variable_selector: []
+          memory:
+            query_prompt_template: '{{#sys.query#}}'
+            window:
+              enabled: true
+              size: 10
           vision:
             enabled: false
+          variables: []
           selected: false
       - id: answer
         type: custom
         position:
-          x: 1020
-          y: 280
+          x: 720
+          y: 282
         positionAbsolute:
-          x: 1020
-          y: 280
-        width: 244
+          x: 720
+          y: 282
+        width: 242
         height: 90
         sourcePosition: right
         targetPosition: left
         selected: false
         data:
           type: answer
-          title: 直接回复
+          title: 出方
           desc: ''
           answer: '{{#llm.text#}}'
+          variables: []
           selected: false
     viewport:
       x: 0
       y: 0
       zoom: 0.8
+  rag_pipeline_variables: []
