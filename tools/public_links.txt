@@ -1,0 +1,2 @@
+﻿qoder	https://clocks-remains-claire-serious.trycloudflare.com	http://127.0.0.1:8601
+modelscope	https://entrance-hansen-button-professional.trycloudflare.com	http://127.0.0.1:8602
