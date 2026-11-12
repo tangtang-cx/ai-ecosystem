@@ -27,13 +27,13 @@
 
 | 赛题 | 分支 | Commit SHA（40 位） | 分支内容 |
 | --- | --- | --- | --- |
-| Dify | `Dify` | `15f2ac4e07b921446e79eebbdf262988874accc8` | `dify/`（DSL + 真·seekdb 服务） |
-| Qoder | `qoder` | `e2275fbafd575794584227686104c46221d82181` | `qoder/`（审查助手 + seekdb 集成） |
-| 魔搭社区 | `modelscope` | `46299d3d294df7200142c33728a70d3fb8022558` | `modelscope/`（助手 + 已上传的 Skill） |
-| 高德 | `gaode` | `8ffa33ae6a9cf0f2b3b969e858b9c846fb867dd3` | `gaode/SKILL.md` |
-| StepFun | `stepfun` | `062d9c12e48abb91f20033b2135585495bf2ced7` | `stepfun/` |
-| 全部生态赛题合并版 | `2026-competition-ecosystem` | `576c8588fe5bcfbd4b66535d884914a298bda29e` | 六个赛题目录 + 总览 |
-| 加赛（PowerContext） | `2026-competition-powercontext` | `c06bca1b9a134231689d5616f7f0f5392cd005a4` | PowerContext 实现 |
+| Dify | `Dify` | 15f2ac4e07b921446e79eebbdf262988874accc8 | `dify/`（DSL + 真·seekdb 服务） |
+| Qoder | `qoder` | b66ed07b4f6a9b154a0996d55f721f7289ab9cad | `qoder/`（审查助手 + seekdb 集成） |
+| 魔搭社区 | `modelscope` | 46299d3d294df7200142c33728a70d3fb8022558 | `modelscope/`（助手 + 已上传的 Skill） |
+| 高德 | `gaode` | 1ff93437c1a3f996b7e18998d3da48ea103b6ec9 | `gaode/SKILL.md` |
+| StepFun | `stepfun` | 0c11f29bb9180671ce02d7b9cb070ffd12db6213 | `stepfun/` |
+| 全部生态赛题合并版 | `2026-competition-ecosystem` | 13f7dba7370d20b21ddc5918e27964e7b56294a4 | 六个赛题目录 + 总览 |
+| 加赛（PowerContext） | `2026-competition-powercontext` | c06bca1b9a134231689d5616f7f0f5392cd005a4 | PowerContext 实现 |
 
 > 仓库地址在提测平台必须写成 `https://<用户名>:<令牌>@github.com/tangtang-cx/ai-ecosystem.git`
 > （官方只接受这一种格式，缺用户名会判 `failMsg=4` → 「执行失败 0.000」）。
