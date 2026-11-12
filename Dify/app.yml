@@ -1,0 +1,225 @@
+app:
+  description: 基于 OceanBase / seekdb 向量库文档的 RAG 问答助手。知识库由 Dify
+    知识检索节点提供，检索到的片段注入 LLM 上下文后作答。
+  icon: 📚
+  icon_background: '#EFF1F5'
+  name: OceanBase 向量库文档助手
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.5
+workflow:
+  conversation_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+        - .md
+        - .txt
+        - .pdf
+      allowed_file_types:
+        - custom
+      allowed_file_upload_methods:
+        - local_file
+        - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        allowed_file_extensions:
+          - .md
+          - .txt
+          - .pdf
+        allowed_file_types:
+          - custom
+        enabled: false
+        fileUploadConfig:
+          audio_file_size_limit: 50
+        image_file_size_limit: 10
+        number_limits: 3
+        image:
+          enabled: false
+          number_limits: 3
+          transfer_methods:
+            - local_file
+            - remote_url
+        ocr:
+          enabled: false
+        video_file_size_limit: 100
+        video:
+          enabled: false
+          number_limits: 3
+          transfer_methods:
+            - local_file
+            - remote_url
+    opening_statement: 您好，我是 OceanBase / seekdb 向量库文档助手。\n可以问我：HNSW 索引怎么建？混合检索的
+      RRF 融合怎么写？端侧 INT8 量化对召回有影响吗？AMD GPU 加速 HNSW 的收益点在哪？
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - HNSW 向量索引的建表语句是什么？
+      - 混合检索（向量 + 全文）如何用 RRF 融合？
+      - OceanBase 向量检索支持哪些距离度量？
+      - 端侧 INT8 量化会损失多少召回率？
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - id: start-source-kb-target
+        source: start
+        target: kb
+        sourceHandle: source
+        targetHandle: target
+        type: custom
+        zIndex: 0
+        selected: false
+        data:
+          sourceType: start
+          targetType: knowledge-retrieval
+      - id: kb-source-llm-target
+        source: kb
+        target: llm
+        sourceHandle: source
+        targetHandle: target
+        type: custom
+        zIndex: 0
+        selected: false
+        data:
+          sourceType: knowledge-retrieval
+          targetType: llm
+      - id: llm-source-answer-target
+        source: llm
+        target: answer
+        sourceHandle: source
+        targetHandle: target
+        type: custom
+        zIndex: 0
+        selected: false
+        data:
+          sourceType: llm
+          targetType: answer
+    nodes:
+      - id: start
+        type: custom
+        position:
+          x: 30
+          y: 280
+        positionAbsolute:
+          x: 30
+          y: 280
+        width: 244
+        height: 90
+        sourcePosition: right
+        targetPosition: left
+        selected: false
+        data:
+          type: start
+          title: 开始
+          desc: ''
+          variables: []
+          selected: false
+      - id: kb
+        type: custom
+        position:
+          x: 360
+          y: 270
+        positionAbsolute:
+          x: 360
+          y: 270
+        width: 244
+        height: 100
+        sourcePosition: right
+        targetPosition: left
+        selected: false
+        data:
+          type: knowledge-retrieval
+          title: 知识检索
+          desc: ''
+          dataset_ids: []
+          retrieval_mode: multiple
+          multiple_retrieval_config:
+            top_k: 4
+            score_threshold_enabled: false
+            score_threshold: null
+            reranking_enable: false
+            reranking_mode: reranking_model
+            reranking_model:
+              reranking_provider_name: ''
+              reranking_model_name: ''
+          selected: false
+      - id: llm
+        type: custom
+        position:
+          x: 690
+          y: 270
+        positionAbsolute:
+          x: 690
+          y: 270
+        width: 244
+        height: 98
+        sourcePosition: right
+        targetPosition: left
+        selected: false
+        data:
+          type: llm
+          title: 生成回答
+          desc: ''
+          model:
+            provider: tongyi
+            name: qwen-plus
+            mode: chat
+            completion_params:
+              temperature: 0.1
+              max_tokens: 2048
+          prompt_template:
+            - id: sys
+              role: system
+              text: |-
+                你是 OceanBase / seekdb 向量数据库的资深工程师，正在为第六届 OceanBase 数据库大赛的参赛作品答疑。
+                请严格依据【知识库上下文】回答问题，引用上下文中的原文片段并给出出处标题。
+                如果上下文不足以回答，请明确说明「知识库中没有覆盖这一点」，并给出可以自行验证的方向，不要编造 API。
+                涉及建表语句、SQL、函数名时，请使用可直接复制的代码块。
+            - id: usr
+              role: user
+              text: |-
+                【知识库上下文】
+                {{#context#}}
+
+                【用户问题】
+                {{#sys.query#}}
+          context:
+            enabled: true
+            variable_selector:
+              - kb
+              - result
+          vision:
+            enabled: false
+          selected: false
+      - id: answer
+        type: custom
+        position:
+          x: 1020
+          y: 280
+        positionAbsolute:
+          x: 1020
+          y: 280
+        width: 244
+        height: 90
+        sourcePosition: right
+        targetPosition: left
+        selected: false
+        data:
+          type: answer
+          title: 直接回复
+          desc: ''
+          answer: '{{#llm.text#}}'
+          selected: false
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

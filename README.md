@@ -8,6 +8,17 @@
 | `stepfun/` | 端侧 AI 推理性能优化与 seekdb 混合检索 | Web 应用、源码、技术说明 | 已完成（本机未复跑完整近似检索，见下） |
 | `amd/` | seekdb × AMD hipVS：加速 HNSW 索引构建 | 源码、复现测试、CPU/GPU 对比报告 | 未开始：缺 ROCm/GPU |
 
+## 生态赛题（Dify / Qoder / 魔搭）
+
+| 目录 | 赛题 | 提交物 | 状态 |
+| --- | --- | --- | --- |
+| `Dify/` | Dify：OceanBase 向量库文档 RAG 助手 | `app.yml`（可导入 DSL）、`kb/` 知识库、一键建库脚本 | 已完成，导入并发布即可拿链接 |
+| `Qoder/` | Qoder：数据库代码审查助手 | Streamlit 应用 + 15 条静态规则 + 单测 | 已完成，待 Qoder Sites 发布 |
+| `魔搭/` | 魔搭社区：ModelScope 推理 API 问答助手 | Python 代码 + 录屏 `第三题.mp4` | 已完成（真实调用，非占位） |
+
+> 全部赛题的**统一索引**（7 节：AMD / MiniMax / Qoder / StepFun / Dify / 高德 / 魔搭，
+> 每节含实现思路、截图链接、核心代码）见 [`AI-Ecosystem-Solutions/README.md`](AI-Ecosystem-Solutions/README.md)。
+
 ## 重要说明
 
 - 高德题**不需要**提交后端代码或 API Key。评测平台统一提供 Agent、模型与高德 MCP 工具，只加载 `gaode/SKILL.md`。
@@ -29,6 +40,15 @@ stepfun/  -> 阶跃星辰 Web 应用
 amd/      -> AMD 赛题源码（如有 GPU 环境）
 ```
 
+生态赛题（Dify / Qoder / 魔搭）在 `main` 与 `2026-competition-ecosystem` 两个分支上都有：
+
+```text
+Dify/       -> Dify 应用 DSL + 知识库 + 一键脚本
+Qoder/      -> Qoder 生成的数据库代码审查助手
+魔搭/        -> ModelScope 问答助手 + 录屏
+AI-Ecosystem-Solutions/ -> 7 节总览 README
+```
+
 提交到提测平台时填写本仓库地址、`2026-competition-ecosystem` 分支和完整 40 位 commit SHA。
 
 ## 本地校验
@@ -36,6 +56,14 @@ amd/      -> AMD 赛题源码（如有 GPU 环境）
 ```powershell
 # 校验高德 Skill 的 YAML frontmatter 与必填段落
 python tools/check_skill.py gaode/SKILL.md
+
+# Qoder：静态规则 + UI 冒烟（23 个用例）
+python Qoder/tests/test_rules.py -v
+python Qoder/tests/test_app_smoke.py -v
+
+# 魔搭：客户端单测 + 真实连通性（9 个用例）
+python 魔搭/tests/test_client.py -v
+python 魔搭/scripts/smoke_test.py
 ```
 
 StepFun 与 AMD 的启动方式分别见对应目录的 `README.md`。
