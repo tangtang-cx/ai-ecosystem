@@ -13,7 +13,7 @@
  *     --paths Dify Qoder 榄旀惌 AI-Ecosystem-Solutions README.md \
  *     --message "feat: add dify, qoder and modelscope deliverables"
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, statSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, relative, sep } from "node:path";
 
@@ -179,6 +179,7 @@ async function main() {
     for (const relativePath of files) {
       const file = join(ROOT, relativePath);
       if (!existsSync(file)) continue;
+      if (!statSync(file).isFile()) continue; // skip directory entries (e.g. stray clones)
       const targetPath = relativePath.startsWith(`${sourcePath.replace(/\/$/, "")}/`)
         ? `${destPath.replace(/\/$/, "")}/${relativePath.slice(sourcePath.replace(/\/$/, "").length + 1)}`
         : destPath;
@@ -232,6 +233,7 @@ async function main() {
 }
 
 await main();
+
 
 
 
