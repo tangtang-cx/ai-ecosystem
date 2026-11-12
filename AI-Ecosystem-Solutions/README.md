@@ -29,17 +29,16 @@
 | --- | --- | --- | --- |
 | Dify | `Dify` | `9e0f9518c0bb265042e82f99c59c78d3ee1a2608` | `dify/`（DSL + 真·seekdb 服务） |
 | Qoder | `qoder` | `1d7511a27b1b705d314116bec8ca7ad38541ac95` | `qoder/`（审查助手 + seekdb 集成） |
-| 魔搭社区 | `modelscope` | `934ead3275b4ea9db2c85389834baa8dab017ab3` | `modelscope/`（助手 + **待上传的 Skill**） |
+| 魔搭社区 | `modelscope` | `21859ebcbbe273a0e2d6cc181437bbda05ffba6d` | `modelscope/`（助手 + 已上传的 Skill） |
 | 高德 | `gaode` | `8ffa33ae6a9cf0f2b3b969e858b9c846fb867dd3` | `gaode/SKILL.md` |
 | StepFun | `stepfun` | `062d9c12e48abb91f20033b2135585495bf2ced7` | `stepfun/` |
-| 全部生态赛题合并版 | `2026-competition-ecosystem` | `0e0001421a27871158468c1c83ed28cc9a2b1504` | 六个赛题目录 + 总览 |
-| 加赛（向量库 / PowerContext） | `2026-competition-powercontext` | `c06bca1b9a134231689d5616f7f0f5392cd005a4` | PowerContext 实现 |
+| 全部生态赛题合并版 | `2026-competition-ecosystem` | `b03806478ee18ea0bc9469389e9da534adcaecb4` | 六个赛题目录 + 总览 |
+| 加赛（PowerContext） | `2026-competition-powercontext` | `c06bca1b9a134231689d5616f7f0f5392cd005a4` | PowerContext 实现 |
 
 > 仓库地址在提测平台必须写成 `https://<用户名>:<令牌>@github.com/tangtang-cx/ai-ecosystem.git`
 > （官方只接受这一种格式，缺用户名会判 `failMsg=4` → 「执行失败 0.000」）。
 
 ---
-
 
 ## 1. AMD · seekdb × AMD hipVS：加速 HNSW 索引构建
 
@@ -159,16 +158,16 @@ request = urllib.request.Request(
 ### 核心代码
 
 ```python
-# qoder/reviewer.py —— 静态规则（节选）
+# Qoder/reviewer.py —— 静态规则（节选）
 Rule(id="OB-001", level="error", title="UPDATE / DELETE 缺少 WHERE",
      pattern=r"\b(update|delete\s+from)\b(?![\s\S]{0,400}?\bwhere\b)",
      message="语句没有 WHERE 条件，会更新/删除全表数据。",
      suggestion="补全 WHERE 条件；生产环境先在同事务里 SELECT 校验影响行数。")
 
 # qoder/seekdb_bridge.py —— 与 seekdb 的双向交互
-hits = seekdb_bridge.search_knowledge(sql[:500], kb_url, top_k=3)   # 检索依据
+hits = seekdb_bridge.search_knowledge(sql[:500], kb_url, top_k=3)     # 检索依据
 seekdb_bridge.save_review(sql=sql, findings=..., engine="rules+llm")  # 写回历史
-seekdb_bridge.list_reviews()                                           # 实时查历史
+seekdb_bridge.list_reviews()                                            # 实时查历史
 
 # qoder/app.py —— 三层合并
 findings = analyze(sql)                        # 确定性规则
@@ -178,7 +177,6 @@ llm_findings = reviewer.review(sql, extra_context=kb_context).findings
 
 测试：`python qoder/tests/test_rules.py -v` → **22 passed**；
 `python qoder/tests/test_app_smoke.py -v` → **1 passed**。
-
 
 ---
 
@@ -347,36 +345,29 @@ description: 周边去哪儿：基于高德 MCP 的地点推荐助手
 
 ### 实现思路
 
-- **官方赛题要求的交付物是 Skill 网址/编号**（不是代码仓库、也不是录屏）：
-  准备一个自己的 Skill → 上传到魔搭社区 → 复制它的页面链接或编号 → 填进提测平台。
-- **我们的 Skill**：`oceanbase-sql-reviewer`
-  （「OceanBase SQL 审查 · 老中医版」）——
-  - `SKILL.md`：带 YAML frontmatter（`name` / `description` / `license`）的完整技能说明，
-    含触发场景、四步工作流（先查 seekdb → 再跑静态规则 → 四段式输出 → 技术准确性硬约束）、
-    使用示例；硬约束里明确写了 `VECTOR(n)`、HNSW/IK 索引写法、
-    `@search_parm` + `DBMS_HYBRID_SEARCH.GET_SQL`、`dbms_index_manager.refresh()`，
-    以及「不许编造 API」。
-  - `scripts/review_rules.py`：15 条确定性规则扫描器（仅标准库，离线可用，已实测）。
-  - `references/rules.md`：规则表。
-- **顺带的第二件作品**（题外收获，也是这个 Skill 的能力底座）：`modelscope/app.py` +
-  `modelscope_client.py` —— 真实调用魔搭免费推理 API 的 Streamlit 助手
-  （Base URL `https://api-inference.modelscope.cn/v1`，38 个免费模型可选，
-  界面上显示 model / 耗时 / usage，可证明是真实推理而非占位），录屏 `第三题.mp4`。
+- **完全复用 StepFun 的 Python 结构**，只换两处：Base URL 换成魔搭的
+  `https://api-inference.modelscope.cn/v1`，模型换成魔搭免费推理模型。
+- 魔搭同样提供 **OpenAI 兼容**协议，所以客户端代码几乎不变——
+  这正是「一套代码多平台」的收益。
+- **不搞占位**：旧版 `app.py` 只返回固定字符串占位，本版真实调用接口，
+  界面上直接显示 `model / 耗时 / usage` 三个指标，可以现场证明是真实推理。
+- **动态模型列表**：启动时拉 `/v1/models`（免鉴权），下拉里可选 38 个免费模型，
+  包括 `MiniMax/MiniMax-M3`、`stepfun-ai/Step-3.5-Flash`、`Qwen/Qwen3.5-27B`。
 
 ### 截图 / 链接
 
 | 内容 | 位置 |
 | --- | --- |
-| **Skill 本体（要上传的就是它）** | ✅ `modelscope/SKILL.md`（+ `scripts/`、`references/`） |
-| 上传步骤 + 提测字段格式 | ✅ `modelscope/SKILL_UPLOAD.md` |
-| Skill 上传后的**网址/编号** | ⏳ 待你上传后填入提测平台（`https://modelscope.cn/skills/<账号>/oceanbase-sql-reviewer`） |
+| **Skill 网址（已上传，公开可访问，实测 HTTP 200）** | `https://modelscope.cn/skills/wzhaihqy/oceanbase-sql-reviewer` |
+| Skill 本体（源码留档） | ✅ `modelscope/SKILL.md`（+ `scripts/`、`references/`） |
+| 上传步骤 + 表单填写 | ✅ `modelscope/SKILL_UPLOAD.md` |
 | 规则脚本自检 | ✅ `python modelscope/scripts/review_rules.py "<SQL>"` |
 | 运行录屏（推理助手） | ✅ `modelscope/第三题.mp4` |
 
 ### 核心代码
 
 ```python
-# modelscope/modelscope_client.py —— 魔搭 OpenAI 兼容接口
+# modelscope/modelscope_client.py
 class ModelScopeClient:
     def chat(self, messages, *, model=None, temperature=0.7, max_tokens=1024) -> ChatResult:
         payload = {"model": model or self.model, "messages": list(messages),
@@ -389,9 +380,7 @@ class ModelScopeClient:
 
 ```bash
 # 自检：38 个模型可用 + 真实对话
-python modelscope/scripts/smoke_test.py
-# Skill 规则脚本自检
-python modelscope/scripts/review_rules.py "SELECT * FROM t LIMIT 20, 200000;"
+python 魔搭/scripts/smoke_test.py
 ```
 
 ---

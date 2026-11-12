@@ -5,7 +5,21 @@
 
 ---
 
-## 1. 我们要上传的 Skill
+## 0. 已完成：Skill 已上传（提测就填这个链接）
+
+```text
+https://modelscope.cn/skills/wzhaihqy/oceanbase-sql-reviewer
+```
+
+- 已实测：未登录直接访问返回 **HTTP 200**，页面标题含 `oceanbase-sql-reviewer`（可见范围=公开生效）。
+- 提测平台「魔搭社区」入口 → 粘贴上面这条网址 → 提交。
+
+> 同一份 Skill 的源码也在本仓库 `modelscope/`（`SKILL.md` + `scripts/review_rules.py` + `references/rules.md`），
+> 打包文件 `modelscope/oceanbase-sql-reviewer-skill.zip`。
+
+---
+
+## 1. 我们上传的 Skill
 
 | 项 | 值 |
 | --- | --- |

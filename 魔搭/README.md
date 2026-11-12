@@ -28,6 +28,20 @@ https://entrance-hansen-button-professional.trycloudflare.com
 > 第一次打开时，请在左侧边栏粘贴魔搭访问令牌（`ms-...`），否则聊天会提示缺少 Key。
 > （也可以先设置环境变量 `MODELSCOPE_API_KEY` 再启动。）
 
+## ⭐ 本赛题的正式提交物：已上传的 Skill
+
+| 项 | 值 |
+|---|---|
+| **Skill 网址** | `https://modelscope.cn/skills/wzhaihqy/oceanbase-sql-reviewer` |
+| 英文名称 | `oceanbase-sql-reviewer` |
+| 展示名称 | OceanBase SQL 审查专家 |
+| 可见范围 | 公开（实测未登录 HTTP 200） |
+| License | Apache-2.0 |
+| 源码 | `modelscope/SKILL.md` + `scripts/review_rules.py` + `references/rules.md` |
+| 打包 | `modelscope/oceanbase-sql-reviewer-skill.zip` |
+
+上传步骤与表单填写见 [`SKILL_UPLOAD.md`](SKILL_UPLOAD.md)。
+
 ---
 
 ## 2. API Key 获取（3 分钟）
