@@ -1,26 +1,19 @@
 app:
-  description: SQL 老中医 · 数据库问诊室。老中医会先去真实的 seekdb 向量库里「翻医书」
-    （本地 bge-small-zh 向量 + IK 全文 + RRF 混合检索），再结合检索到的原文给用户开方。
+  description: SQL 老中医 · 数据库问诊室。把 SQL、报错或「数据库不舒服」的描述交给老中医，
+    他会按固定六段式给出「医书摘录 / 病灶诊断 / 药方 / 忌口 / 养生建议 / 医嘱小笺」。
+    本 DSL 零外部依赖，导入即可运行；配套的 seekdb 版本见 app-seekdb.yml。
   icon: 🩺
   icon_background: '#EFF1F5'
   icon_type: emoji
   mode: advanced-chat
-  name: SQL 老中医 · 数据库问诊室（seekdb 医书版）
+  name: SQL 老中医 · 数据库问诊室
   use_icon_as_answer_icon: false
 dependencies: []
 kind: app
 version: 0.6.0
 workflow:
   conversation_variables: []
-  environment_variables:
-    - description: seekdb 知识服务地址（Dify/seekdb_service/serve.py 提供）
-      id: seekdb-service-url
-      name: seekdb_service_url
-      selector:
-        - env
-        - seekdb_service_url
-      value: http://127.0.0.1:8848
-      value_type: string
+  environment_variables: []
   features:
     file_upload:
       allowed_file_extensions:
@@ -52,13 +45,13 @@ workflow:
           - remote_url
       number_limits: 3
     opening_statement: >-
-      🩺 欢迎来到「SQL 老中医 · 数据库问诊室」！\n\n老中医看病前会先去医书里翻一翻——
-      这次翻的是一台**真实的 seekdb 向量库**（本地 bge-small-zh 向量 + IK 全文索引 + RRF 混合检索），
-      检索到的原文会作为「医书摘录」一起给你。\n\n把病历交给我：贴一段 SQL、甩一条报错，
-      或者用大白话说「我的查询像老牛拉车」。\n\n我会按老中医的套路给你开方：\n
-      1. 📖 医书摘录（来自 seekdb 检索）\n2. 🩺 望闻问切 —— 病灶在哪\n3. 💊 药方 —— 可直接复制的改写版 SQL\n
+      🩺 欢迎来到「SQL 老中医 · 数据库问诊室」！\n\n把病历交给我：贴一段 SQL、甩一条报错，
+      或者用大白话说「我的查询像老牛拉车」。\n\n我会**固定**给你六段，顺序不变、缺一不可：\n
+      1. 📖 医书摘录 —— 依据来自《OceanBase / seekdb 医书》（见本应用的医书要点）\n
+      2. 🩺 望闻问切 —— 病灶在哪\n3. 💊 药方 —— 可直接复制的改写版 SQL\n
       4. 🚫 忌口 —— 哪些写法千万别碰\n5. 🧘 养生建议 —— 平时怎么保养数据库\n
-      6. 🎋 医嘱小笺 —— 一句话俏皮话
+      6. 🎋 医嘱小笺 —— 一句话俏皮话\n\n主治病症：慢查询、深分页、全表扫、锁等待、
+      索引失效、写入抖动、向量检索不准……
     retriever_resource:
       enabled: true
     sensitive_word_avoidance:
@@ -68,8 +61,8 @@ workflow:
     suggested_questions:
       - HNSW 向量索引的建表语句是什么？
       - 混合检索（向量 + 全文）如何用 RRF 融合？
+      - 深分页 OFFSET 200000 怎么治？
       - 端侧 INT8 量化会损失多少召回率？
-      - AMD GPU 加速 HNSW 的建图收益有多少？
     suggested_questions_after_answer:
       enabled: false
     text_to_speech:
@@ -78,13 +71,8 @@ workflow:
       voice: ''
   graph:
     edges:
-      - id: start-seekdb
+      - id: start-llm
         source: start
-        sourceHandle: source
-        target: seekdb
-        targetHandle: target
-      - id: seekdb-llm
-        source: seekdb
         sourceHandle: source
         target: llm
         targetHandle: target
@@ -113,55 +101,13 @@ workflow:
           desc: ''
           variables: []
           selected: false
-      - id: seekdb
-        type: custom
-        position:
-          x: 400
-          y: 282
-        positionAbsolute:
-          x: 400
-          y: 282
-        width: 242
-        height: 120
-        sourcePosition: right
-        targetPosition: left
-        selected: false
-        data:
-          type: http-request
-          title: 翻医书（查询 seekdb）
-          desc: 向量 + 全文 + RRF 混合检索，融合在 seekdb 内核内完成
-          method: post
-          url: http://127.0.0.1:8848/search
-          authorization:
-            type: no-auth
-            config: null
-          headers: 'Content-Type:application/json'
-          params: ''
-          body:
-            type: json
-            data:
-              - id: body-query
-                type: text
-                key: ''
-                value: '{"query": "{{#sys.query#}}", "top_k": 4, "mode": "hybrid"}'
-          timeout:
-            max_connect_timeout: 10
-            max_read_timeout: 60
-            max_write_timeout: 20
-          retry_config:
-            max_retries: 2
-            retry_enabled: false
-            retry_interval: 1000
-          ssl_verify: true
-          variables: []
-          selected: false
       - id: llm
         type: custom
         position:
-          x: 720
+          x: 400
           y: 282
         positionAbsolute:
-          x: 720
+          x: 400
           y: 282
         width: 242
         height: 98
@@ -177,42 +123,63 @@ workflow:
             name: ''
             mode: chat
             completion_params:
-              temperature: 0.8
+              temperature: 0.3
               max_tokens: 2048
           prompt_template:
             - role: system
               text: >-
                 你是「SQL 老中医」，一位专治数据库疑难杂症的老派中医，兼 OceanBase /
-                seekdb 资深工程师。你手上有一本《OceanBase / seekdb 医书》，医书内容来自一台真实的
-                seekdb 向量库（bge-small-zh 向量检索 + IK 全文检索 + RRF 混合检索）的检索结果。
-                严格按下面的结构回答，使用 Markdown 分节：
-                ### 📖 医书摘录（seekdb 检索）
-                先列出检索到的原文片段标题与关键句，说明这是从 seekdb 医书里查到的。
-                ### 🩺 望闻问切（病灶诊断）
-                结合医书与用户给的 SQL / 报错 / 现象，列出 2-4 条具体问题，说明「症状 → 病因」。
-                ### 💊 药方（可直接复制）
-                给出优化后的完整 SQL 或配置片段，能直接粘贴运行；给出前后对比。
-                ### 🚫 忌口（千万别写）
-                列出导致性能或正确性问题的写法并说明原因。
-                ### 🧘 养生建议
-                2-3 条工程实践建议（索引设计、参数、分批、监控等）。
-                ### 🎋 医嘱小笺
-                一句俏皮话 + 最该先改的那一处。
-                技术要求：涉及 OceanBase / seekdb 时必须使用真实且正确的语法，例如
-                向量列写作 VECTOR(n)；HNSW 索引写作
-                VECTOR INDEX idx (embedding) WITH(distance=cosine, type=hnsw, lib=vsag,
-                m=16, ef_construction=200, ef_search=64)；
-                全文索引用 FULLTEXT INDEX ... WITH PARSER ik；
-                写入后需要刷新索引（dbms_index_manager.refresh()）。
-                不要编造不存在的函数、参数或表；如果用户只描述现象而没给 SQL，先给出最可能的 3 个病因，
-                并请对方贴出 SQL 或 EXPLAIN 结果；如果医书没有覆盖到，就直说「医书里没有这一条」。
-            - role: user
-              text: |-
-                【seekdb 医书检索结果（JSON）】
-                {{#seekdb.body#}}
+                seekdb 资深工程师。你手上有一本《OceanBase / seekdb 医书》（要点见下）。
+                【输出契约 · 必须严格遵守】
+                每次回答**必须**按下面六段输出，标题一字不改、顺序不变、六段齐全，
+                即使某一段没有内容也要保留该标题并写「（本次无）」：
 
-                【病历】
-                {{#sys.query#}}
+                ## 📖 医书摘录
+                ## 🩺 望闻问切
+                ## 💊 药方
+                ## 🚫 忌口
+                ## 🧘 养生建议
+                ## 🎋 医嘱小笺
+
+                各段要求：
+                - 医书摘录：从下方《医书要点》里挑与本次病历相关的条目，列出条目名与关键句。
+                - 望闻问切：2-4 条，每条写成「症状 → 病因」，引用病历里的具体片段。
+                - 药方：给出可直接粘贴运行的优化后 SQL / 配置，并给出前后对比。
+                - 忌口：列出本次病历里出现的危险写法与原因。
+                - 养生建议：2-3 条工程实践（索引设计、参数、分批、监控）。
+                - 医嘱小笺：一句俏皮话 + 最该先改的那一处。
+
+                【《OceanBase / seekdb 医书》要点】
+                1. 建表与索引：
+                   CREATE TABLE t (id VARBINARY(512) PRIMARY KEY NOT NULL, document STRING,
+                   embedding VECTOR(512), metadata JSON,
+                   FULLTEXT INDEX idx_fts (document) WITH PARSER ik PARSER_PROPERTIES=(ik_mode='smart'),
+                   VECTOR INDEX idx_vec (embedding) WITH(distance=cosine, type=hnsw, lib=vsag,
+                   m=16, ef_construction=200, ef_search=64)) ORGANIZATION = HEAP;
+                2. 混合检索（RRF 在 seekdb 内核内融合，k=60）：
+                   SET @search_parm = '{"query":{"query_string":{"fields":["document"],
+                   "query":"..."}},"knn":{"field":"embedding","k":12,"query_vector":[...]},"rank":{"rrf":{}},"size":4}';
+                   SELECT DBMS_HYBRID_SEARCH.GET_SQL('t', @search_parm);
+                3. 写入向量后必须刷新索引：CALL dbms_index_manager.refresh();
+                4. 距离度量：cosine（归一化向量最常用）、l2、inner_product。
+                5. 端侧量化：bge-small-zh-v1.5 INT8 22.8 MiB，Recall@5 0.917 与 FP32 持平，
+                   12 段语料向量化 748 ms。
+                6. GPU 加速（AMD hipVS / cuVS CAGRA）：建图参数 128/256/100 → 96/144/40，
+                   NN-Descent 计算量 3.33x；设备缓冲 + DLPack 张量避免重复 H2D；
+                   recall 红线是与同轮基线相差 ≤ 0.005。
+                7. 常见反模式与改法：
+                   SELECT * → 显式列；WHERE DATE(col)=… → 改成 >= / < 范围；
+                   LIMIT 20, 200000 → 游标分页 WHERE id > :last_id ORDER BY id LIMIT n；
+                   UPDATE/DELETE 无 WHERE → 必须加 WHERE 并先 SELECT 校验；
+                   JOIN 无 ON/USING → 笛卡尔积；NOT IN 遇 NULL → 改 NOT EXISTS；
+                   建表无主键 → 加有序 BIGINT 主键；LIKE '%x' → 前缀匹配或全文索引。
+                8. 只装组件或只测连接不算使用：seekdb 必须真正承担知识库向量存储或应用数据存储
+                   （见 app-seekdb.yml 与 seekdb_service/ 的真实读写记录）。
+
+                【硬约束】只使用真实存在的语法与函数，不要编造 API；
+                病历信息不足时，明确列出还需要哪些信息（表结构、数据量、EXPLAIN 结果）。
+            - role: user
+              text: '{{#sys.query#}}'
           context:
             enabled: false
             variable_selector: []
@@ -228,10 +195,9 @@ workflow:
       - id: answer
         type: custom
         position:
-          x: 1040
-          y: 282
+          x: 720
         positionAbsolute:
-          x: 1040
+          x: 720
           y: 282
         width: 242
         height: 90
