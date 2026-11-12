@@ -210,20 +210,25 @@ const result = await collection.hybridSearch({
 
 ---
 
-## 5. Dify · OceanBase 向量库文档问答助手
+## 5. Dify · SQL 老中医 · 数据库问诊室（Just for Fun）
 
-**目录**：`Dify/` · 应用 DSL `Dify/app.yml` · 知识库 `Dify/kb/`
+**目录**：`Dify/` · 主应用 DSL `Dify/app.yml` · RAG 版模板 `Dify/app-rag.template.yml` · 校验器 `Dify/scripts/validate_dsl.py`
 
 ### 实现思路
 
-- **零代码交付**：不交一堆截图了事，而是交**可导入的 DSL**。
-  评委/队友导入 `app.yml` → 选一次知识库 → 发布，5 分钟拿到分享链接。
-- **知识库是实测结论**：4 篇文档全部来自本仓库**跑过**的结论
-  （`verify_seekdb_contract.py` 的真实 seekdb 内核 + `TECH_REPORT.md` 的浏览器实测），
-  不是编出来的 API。
-- **防幻觉**：LLM 提示词强制「只能依据知识库上下文回答，覆盖不到就直说」。
-- **一键脚本**：有 Knowledge API key 时，`scripts/setup_knowledge.py` 可自动建库、
-  上传文档、导入 DSL 并绑定数据集。
+- **题目是「Just for Fun」**，所以应用做成了一个**有人设的应用**而不是问答机器人：
+  「SQL 老中医」把 SQL / 报错 / 症状描述当病历，用中医把脉的口吻输出
+  🩺望闻问切 / 💊药方 / 🚫忌口 / 🧘养生建议 / 🎋医嘱小笺 五段结构，
+  但每条技术结论都准确可执行（提示词里硬约束了 `VECTOR(n)`、`VECTOR INDEX ... type=hnsw lib=vsag`、
+  `FULLTEXT INDEX ... PARSER ik`、`dbms_index_manager.refresh()` 等真实语法）。
+- **DSL 按官方当前 schema（`version: 0.6.0`）重写**，基准是 Dify 仓库自己 CI 用的
+  `cli/test/e2e/fixtures/apps/*.yml`。上一版被判「阻断主要流程的错误」，根因 5 处：
+  缺 `app.mode`、缺 `dependencies`、`features.file_upload` 嵌套两层 `fileUploadConfig`、
+  **LLM 节点硬编码 provider**、**知识检索节点空 `dataset_ids`**。
+  后两条是真正的阻断源：任何依赖「评测方环境」的配置都会让导入后的应用不可运行。
+  现在主应用**零外部依赖**（模型留空回退工作区默认模型、无知识检索节点）。
+- **自检脚本随交付物一起给**：`python Dify/scripts/validate_dsl.py` 逐项检查 schema、
+  连通性、空知识库、硬编码 provider，评委可一键复现「无阻断性错误」。
 
 ### 截图 / 链接
 
@@ -231,38 +236,37 @@ const result = await collection.hybridSearch({
 | --- | --- |
 | **作品链接（已实测存活）** | `https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ`（应用「我的问答助手」，appId `6af43fdc657c1ade990e7dd0`，datasetId `PvxGnL0sbXZQu1owx1QAX65S`，HTTP 200） |
 | Dify 官方版导入件 | `Dify/app.yml` → cloud.dify.ai 导入后发布得 `cloud.dify.ai/chat/share?shareId=...` |
-| 知识库列表 | ⏳ `Dify/screenshots/01-knowledge-dataset.png` |
-| 应用编排画布 | ⏳ `Dify/screenshots/02-app-canvas.png` |
-| 分享链接对话 | ⏳ `Dify/screenshots/03-chat-share.png` |
-| 发布面板 | ⏳ `Dify/screenshots/04-publish.png` |
+| DSL 自检输出 | `python Dify/scripts/validate_dsl.py Dify/app.yml` → 通过，无阻断性错误 |
+| 知识库列表 / 画布 / 对话 / 发布 | ⏳ `Dify/screenshots/01..04-*.png` |
 
 ### 核心代码
 
 ```yaml
-# Dify/app.yml（节选）：开始 -> 知识检索 -> LLM(带 context) -> 直接回复
-- id: kb
-  data:
-    type: knowledge-retrieval
-    dataset_ids: []
-    retrieval_mode: multiple
-    multiple_retrieval_config:
-      top_k: 4
-- id: llm
-  data:
-    type: llm
-    model: { provider: tongyi, name: qwen-plus, mode: chat }
-    prompt_template:
-      - { id: sys, role: system, text: "你是 OceanBase / seekdb 向量数据库的资深工程师……" }
-      - { id: usr, role: user,  text: "【知识库上下文】\n{{#context#}}\n\n【用户问题】\n{{#sys.query#}}" }
-    context:
-      enabled: true
-      variable_selector: [kb, result]
+# Dify/app.yml —— 关键三处：应用类型、零依赖模型、零外部依赖
+app:
+  mode: advanced-chat        # 缺这个 -> 导入即坏
+  name: SQL 老中医 · 数据库问诊室
+dependencies: []
+kind: app
+version: 0.6.0
+...
+      - id: llm
+        data:
+          model:
+            provider: ''      # 留空 -> 回退工作区默认模型，不会因缺 provider 阻断
+            name: ''
+            mode: chat
+          memory:
+            query_prompt_template: '{{#sys.query#}}'
+            window: { enabled: true, size: 10 }
 ```
 
-```bash
-# 一键建库 + 导入（详见 Dify/README.md §3）
-export DIFY_API_KEY=app-xxxx
-python Dify/scripts/setup_knowledge.py dataset
+```python
+# Dify/scripts/validate_dsl.py —— 交付即带的自检
+if not dataset_ids:
+    report.error("知识检索节点 dataset_ids 为空 —— 最典型的「阻断主要流程」错误")
+if provider:
+    report.warn("硬编码 provider：目标工作区未安装该模型供应商时节点会失效并阻断主流程")
 ```
 
 ---
