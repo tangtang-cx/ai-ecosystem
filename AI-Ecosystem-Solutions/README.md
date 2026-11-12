@@ -229,9 +229,11 @@ const result = await collection.hybridSearch({
 
 | 内容 | 位置 |
 | --- | --- |
+| **作品链接（已实测存活）** | `https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ`（应用「我的问答助手」，appId `6af43fdc657c1ade990e7dd0`，datasetId `PvxGnL0sbXZQu1owx1QAX65S`，HTTP 200） |
+| Dify 官方版导入件 | `Dify/app.yml` → cloud.dify.ai 导入后发布得 `cloud.dify.ai/chat/share?shareId=...` |
 | 知识库列表 | ⏳ `Dify/screenshots/01-knowledge-dataset.png` |
 | 应用编排画布 | ⏳ `Dify/screenshots/02-app-canvas.png` |
-| 分享链接对话 | ⏳ `Dify/screenshots/03-chat-share.png`（附最终 URL） |
+| 分享链接对话 | ⏳ `Dify/screenshots/03-chat-share.png` |
 | 发布面板 | ⏳ `Dify/screenshots/04-publish.png` |
 
 ### 核心代码
