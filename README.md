@@ -21,7 +21,15 @@
 
 ## 提测信息（仓库 / 分支 / Commit SHA）
 
-仓库地址统一为 `https://github.com/tangtang-cx/ai-ecosystem`（私有库，评测方需有访问权限）。
+> **提测时仓库地址必须写成官方规定的唯一格式**：
+> `https://<用户名>:<令牌>@github.com/<所有者>/<仓库>`
+> （用户名 + 冒号 + 令牌，缺用户名或缺令牌都会被平台判为 `failMsg=4`，直接「执行失败 0.000」）
+
+```text
+https://wzhaihqy:<你的 GitHub PAT>@github.com/tangtang-cx/ai-ecosystem.git
+```
+
+仓库地址统一为 `https://github.com/tangtang-cx/ai-ecosystem`（**私有库**，官方要求不得使用公开仓库）。
 
 | 赛题 | 分支 | Commit SHA（40 位） |
 | --- | --- | --- |
@@ -34,6 +42,15 @@
 | 全部生态赛题合并版 | `2026-competition-ecosystem` | 见 [`AI-Ecosystem-Solutions/README.md`](AI-Ecosystem-Solutions/README.md) |
 
 > 所有分支都包含官方基线提交 `39e069f4`，可直接用于提测平台的「仓库 + 分支 + 40 位 SHA」校验。
+
+## 作品链接
+
+| 赛题 | 作品链接 | 状态 |
+| --- | --- | --- |
+| Dify | `https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ` | ✅ 实测 HTTP 200（FastGPT 应用「我的问答助手」，dataset `PvxGnL0sbXZQu1owx1QAX65S`） |
+| Dify（Dify 官方版） | `https://cloud.dify.ai/chat/share?shareId=________________` | ⏳ 导入 `Dify/app.yml` 后发布填入 |
+| Qoder | `https://________________.qoder.site` | ⏳ Qoder Sites 发布后填入 |
+| 魔搭社区 | `https://________________.modelscope.cn` | ⏳ 魔搭创空间部署后填入 |
 
 ## 重要说明
 
