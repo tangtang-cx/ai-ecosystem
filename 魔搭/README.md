@@ -17,11 +17,16 @@
 | `第三题.mp4` | 运行成功录屏（30~120 秒） |
 | `screenshots/` | 魔搭控制台 / 运行界面截图 |
 
-在线体验（如已部署到魔搭创空间）：
+在线体验（公网 Demo，已实测 HTTP 200）：
 
 ```text
-创空间链接：https://________________.modelscope.cn
+https://entrance-hansen-button-professional.trycloudflare.com
 ```
+
+> 该地址由本机的 cloudflared 隧道暴露（隧道地址会变）。**永久**链接请按 §6 部署到魔搭创空间，
+> 拿到 `*.modelscope.cn` 后回填到本文件与根 README 的「作品链接」表。
+> 第一次打开时，请在左侧边栏粘贴魔搭访问令牌（`ms-...`），否则聊天会提示缺少 Key。
+> （也可以先设置环境变量 `MODELSCOPE_API_KEY` 再启动。）
 
 ---
 
