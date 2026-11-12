@@ -27,7 +27,7 @@
 
 | 赛题 | 分支 | Commit SHA（40 位） | 分支内容 |
 | --- | --- | --- | --- |
-| Dify | `Dify` | `006f0f7094ef46f81606551962d5b763dcb2c21b` | `dify/`（DSL + 真·seekdb 服务） |
+| Dify | `Dify` | `ba3ac7aea775fef597a30bea43fc5a5ab0d1db6a` | `dify/`（DSL + 真·seekdb 服务） |
 | Qoder | `qoder` | b66ed07b4f6a9b154a0996d55f721f7289ab9cad | `qoder/`（审查助手 + seekdb 集成） |
 | 魔搭社区 | `modelscope` | 46299d3d294df7200142c33728a70d3fb8022558 | `modelscope/`（助手 + 已上传的 Skill） |
 | 高德 | `gaode` | 1ff93437c1a3f996b7e18998d3da48ea103b6ec9 | `gaode/SKILL.md` |

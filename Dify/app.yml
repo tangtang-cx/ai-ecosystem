@@ -1,7 +1,9 @@
 app:
   description: SQL 老中医 · 数据库问诊室。把 SQL、报错或「数据库不舒服」的描述交给老中医，
     他会按固定六段式给出「医书摘录 / 病灶诊断 / 药方 / 忌口 / 养生建议 / 医嘱小笺」。
-    本 DSL 零外部依赖，导入即可运行；配套的 seekdb 版本见 app-seekdb.yml。
+    本 DSL 零外部依赖。★导入后必做一步★：点开「老中医坐诊」节点选一个模型
+    （留空 = 用工作区默认模型；若该节点显示「模型不可用」，说明工作区没配默认模型，
+    选一个即可）。配套的 seekdb 检索增强版见 app-seekdb.yml。
   icon: 🩺
   icon_background: '#EFF1F5'
   icon_type: emoji
@@ -25,7 +27,7 @@ workflow:
       allowed_file_upload_methods:
         - local_file
         - remote_url
-      enabled: true
+      enabled: false
       fileUploadConfig:
         attachment_image_file_size_limit: 2
         audio_file_size_limit: 50
