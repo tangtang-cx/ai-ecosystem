@@ -49,8 +49,11 @@ https://wzhaihqy:<你的 GitHub PAT>@github.com/tangtang-cx/ai-ecosystem.git
 | --- | --- | --- |
 | Dify | `https://cloud.fastgpt.cn/chat/share?shareId=cbW1j7q9td1AOUZZcakQbgiZ` | ✅ 实测 HTTP 200（FastGPT 应用「我的问答助手」，dataset `PvxGnL0sbXZQu1owx1QAX65S`） |
 | Dify（Dify 官方版） | `https://cloud.dify.ai/chat/share?shareId=________________` | ⏳ 导入 `Dify/app.yml` 后发布填入 |
-| Qoder | `https://________________.qoder.site` | ⏳ Qoder Sites 发布后填入 |
-| 魔搭社区 | `https://________________.modelscope.cn` | ⏳ 魔搭创空间部署后填入 |
+| **Qoder** | `https://clocks-remains-claire-serious.trycloudflare.com` | ✅ 实测 HTTP 200（数据库代码审查助手，公网 Demo） |
+| **魔搭社区** | `https://entrance-hansen-button-professional.trycloudflare.com` | ✅ 实测 HTTP 200（ModelScope 问答助手，公网 Demo） |
+
+> Qoder / 魔搭 两个公网 Demo 由本机的 `tools/serve_public_links.ps1` 通过 cloudflared 隧道暴露
+> （隧道地址会变，永久链接请用 Qoder Sites / 魔搭创空间，链接文件见 `tools/public_links.txt`）。
 
 ## 重要说明
 

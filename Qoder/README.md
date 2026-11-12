@@ -18,11 +18,14 @@
 | `PROMPT.md` | 在 Qoder 里用的提示词、生成物与增强点对照表、Qoder Sites 发布步骤 |
 | `screenshots/` | Qoder 对话截图 + 发布链接截图（见 `PROMPT.md` §5） |
 
-在线演示（发布后填这里）：
+在线演示（公网 Demo，已实测 HTTP 200）：
 
 ```text
-Qoder Sites 链接：https://________________.qoder.site
+https://clocks-remains-claire-serious.trycloudflare.com
 ```
+
+> 该地址由本机的 cloudflared 隧道暴露（隧道地址会变）。要**永久**链接请按 `PROMPT.md` §4
+> 发布到 Qoder Sites，拿到 `*.qoder.site` 后回填到本文件与根 README 的「作品链接」表。
 
 ---
 
