@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="浏览器本地向量化 + seekdb 向量与全文混合检索的迷你知识库"
+    />
+    <title>端侧知识库 · seekdb 混合检索</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <div>
+            <p class="eyebrow">STEPFUN × SEEKDB · LOCAL FIRST</p>
+            <h1>端侧知识库</h1>
+            <p class="subtitle">浏览器本地向量化 · seekdb 向量 + 全文混合检索</p>
+          </div>
+        </div>
+        <div class="badges" aria-live="polite">
+          <span class="badge badge-muted" id="backendBadge">后端检测中</span>
+          <span class="badge badge-muted" id="dbBadge">seekdb 未连接</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="panel panel-import" aria-labelledby="importTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="step">01 / INGEST</p>
+              <h2 id="importTitle">导入知识</h2>
+            </div>
+            <span class="counter" id="corpusCount">0 个片段</span>
+          </div>
+          <p class="hint">
+            每行一段，或直接粘贴长文。文本只在当前浏览器内向量化，向量与原文写入本地 seekdb。
+          </p>
+          <textarea
+            id="docInput"
+            spellcheck="false"
+            placeholder="粘贴要导入的文档，例如：&#10;seekdb 是 OceanBase 推出的 AI 原生数据库……&#10;混合检索会同时执行向量和全文检索……"
+          ></textarea>
+          <div class="actions">
+            <button class="button button-ghost" id="loadSamples" type="button">载入示例语料</button>
+            <button class="button button-primary" id="importBtn" type="button">导入并向量化</button>
+          </div>
+          <div class="status" id="importStatus" role="status">
+            <span class="status-dot"></span>
+            <span id="importStatusText">等待导入</span>
+          </div>
+          <div class="progress" id="importProgress" hidden>
+            <div class="progress-bar" id="importProgressBar"></div>
+          </div>
+          <div class="import-stats">
+            <div><span id="chunkCount">0</span><small>待写入片段</small></div>
+            <div><span id="importMs">—</span><small>向量化耗时</small></div>
+            <div><span id="writeMs">—</span><small>seekdb 写入</small></div>
+          </div>
+        </section>
+
+        <section class="panel panel-search" aria-labelledby="searchTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="step">02 / RETRIEVE</p>
+              <h2 id="searchTitle">混合检索</h2>
+            </div>
+            <span class="counter" id="searchModeBadge">hybrid · RRF</span>
+          </div>
+          <p class="hint">
+            查询向量同样在本地生成，seekdb 在数据库内完成向量与全文两路检索并融合。
+          </p>
+          <div class="search-row">
+            <input
+              id="queryInput"
+              type="search"
+              placeholder="例如：浏览器没有 GPU 时怎么运行模型？"
+              autocomplete="off"
+            />
+            <button class="button button-primary" id="searchBtn" type="button">检索</button>
+          </div>
+          <div class="status" id="searchStatus" role="status">
+            <span class="status-dot"></span>
+            <span id="searchStatusText">等待查询</span>
+          </div>
+          <div class="results" id="results">
+            <div class="empty-state">
+              <div class="empty-ring"></div>
+              <p>导入语料后，输入一个问题开始检索。</p>
+              <small>结果会显示原文片段、来源与融合分数。</small>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <section class="metrics" aria-label="性能指标">
+        <article class="metric">
+          <p>模型加载</p>
+          <strong id="metricLoad">—</strong>
+          <small id="metricModel">INT8 · 23.9 MB</small>
+        </article>
+        <article class="metric">
+          <p>文档向量化</p>
+          <strong id="metricEmbed">—</strong>
+          <small id="metricEmbedRate">—</small>
+        </article>
+        <article class="metric">
+          <p>写入 + 刷新</p>
+          <strong id="metricWrite">—</strong>
+          <small>seekdb</small>
+        </article>
+        <article class="metric">
+          <p>查询向量化</p>
+          <strong id="metricQueryEmbed">—</strong>
+          <small>浏览器本地</small>
+        </article>
+        <article class="metric">
+          <p>seekdb 检索</p>
+          <strong id="metricSearch">—</strong>
+          <small>hybrid / RRF</small>
+        </article>
+        <article class="metric">
+          <p>端到端</p>
+          <strong id="metricE2E">—</strong>
+          <small>提交到结果可展示</small>
+        </article>
+      </section>
+
+      <section class="panel panel-bench" aria-labelledby="benchTitle">
+        <div class="panel-heading">
+          <div>
+            <p class="step">03 / MEASURE</p>
+            <h2 id="benchTitle">量化与质量对比</h2>
+          </div>
+          <button class="button button-ghost" id="qualityBtn" type="button">运行质量对比</button>
+        </div>
+        <div class="bench-grid">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>精度</th><th>模型体积</th><th>相对 FP32</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>FP32</td><td>90.5 MB</td><td>1.00x</td><td>质量基线</td></tr>
+                <tr><td>FP16</td><td>45.3 MB</td><td>2.00x</td><td>WebGPU</td></tr>
+                <tr><td>INT8</td><td>22.8 MB</td><td>3.97x</td><td>WASM 回退</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="quality-output">
+            <p id="qualityHint">
+              点击“运行质量对比”后，会在本地额外加载 FP32 基线，比较当前量化模型与基线的
+              Recall@5 和 Top-5 重合度。首次运行需要下载约 90 MB 模型。
+            </p>
+            <pre id="qualityOutput" hidden></pre>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>本地推理 · 无云端 embedding API</span>
+        <span class="footer-sep">/</span>
+        <span>seekdb 负责存储与混合检索</span>
+        <span class="footer-sep">/</span>
+        <span id="footerModel">bge-small-zh-v1.5 · 512d</span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
