@@ -1,17 +1,22 @@
 # Dify 赛题提交分支
 
+> **本文档描述的是可选增强，不是评测对象。**
+> 主交付是 `app.yml`（workflow：开始 → 规则体检 code 节点 → 出方），
+> **不需要 seekdb、不需要模型、不需要外部服务**。下面这套 seekdb 检索增强
+> 只在你想看「真·向量检索」时使用，评测时可以完全忽略。
+
 题目：**Just for Fun，用 Dify 做一个好玩的智能应用** → 作品：**SQL 老中医 · 数据库问诊室（seekdb 医书版）**
 
 提测时填写：
 
 | 项 | 值 |
 | --- | --- |
-| 仓库 | `https://github.com/tangtang-cx/ai-ecosystem` |
+| 仓库 | `https://github.com/tangtang-cx/seekdb` |
 | 分支 | `Dify` |
-| Commit SHA | 取该分支最新 commit 的完整 40 位 SHA（见 <https://github.com/tangtang-cx/ai-ecosystem/commits/Dify>） |
+| Commit SHA | 取该分支最新 commit 的完整 40 位 SHA（见 <https://github.com/tangtang-cx/seekdb/commits/Dify>） |
 
 > 仓库地址格式（平台唯一接受的写法，缺用户名会直接判 `failMsg=4`「执行失败 0.000」）：
-> `https://wzhaihqy:<PAT>@github.com/tangtang-cx/ai-ecosystem.git`
+> `https://wzhaihqy:<PAT>@github.com/tangtang-cx/seekdb.git`
 
 ## 上一轮判语与本版应对
 
