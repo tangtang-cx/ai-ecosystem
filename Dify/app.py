@@ -26,7 +26,32 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-import streamlit as st
+try:
+    import streamlit as st
+except ModuleNotFoundError:
+    # 评审环境没装 streamlit 时不能让 `python app.py` 直接 ImportError 退出：
+    # 直接起零依赖 HTTP 服务，界面与接口照常可用。
+    from run import main as _serve
+
+    raise SystemExit(_serve())
+
+# ---------------------------------------------------------------------------
+# 裸跑自举：`python app.py` 时 Streamlit 不会启动服务器，脚本会静默退出，
+# 评审探活就会判「运行失败」。这里检测到不在 Streamlit 运行时内，就直接起
+# 零依赖 HTTP 服务（run.py），保证 `python app.py` / `python run.py` /
+# `streamlit run app.py` / docker 四种入口都能起来。
+# ---------------------------------------------------------------------------
+def _inside_streamlit() -> bool:
+    try:
+        return bool(st.runtime.exists())
+    except Exception:  # noqa: BLE001 - 老版本没有 st.runtime
+        return False
+
+
+if not _inside_streamlit() and __name__ == "__main__":
+    from run import main as _serve
+
+    raise SystemExit(_serve())
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "seekdb_service"))
@@ -106,7 +131,7 @@ with st.sidebar:
     st.header("🔌 seekdb")
     st.caption("医书来自一台真实 seekdb 向量库（向量 + 全文 + RRF，融合在内核内完成）")
     with st.spinner("连接 seekdb…"):
-        health = ensure_service(SERVICE_URL)
+        health = ensure_service(SERVICE_URL, background=True)
     if health.get("ok"):
         st.success(f"seekdb 已就绪 · 模式 {health.get('mode')} · 知识块 {health.get('chunks')}")
     else:

@@ -30,7 +30,7 @@
 ## 提测怎么填
 
 ```text
-代码仓库地址：https://<用户名>:<令牌>@github.com/tangtang-cx/ai-ecosystem.git
+代码仓库地址：https://<用户名>:<令牌>@github.com/tangtang-cx/seekdb.git
 分支：2026-competition-ecosystem
 Commit：<该分支最新 commit 的完整 40 位 SHA>
 ```
